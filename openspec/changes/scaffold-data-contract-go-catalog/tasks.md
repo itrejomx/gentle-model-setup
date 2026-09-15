@@ -43,16 +43,16 @@ Chain strategy: stacked-to-main
 
 ## Phase 2: Subscription+Model Schemas, Loader Core (Work Unit 2, PR 2)
 
-- [ ] 2.1 Create `data/schemas/subscription.schema.json`, `data/schemas/model.schema.json` (2020-12, `additionalProperties: false`, six strength axes `integer 0..3`, six `allOf` Strength-3 evidence blocks, `id` pattern `^[a-z0-9][a-z0-9.\-]*$`).
-- [ ] 2.2 RED: fixture pairs under `packages/data/test/fixtures/{valid,invalid}/` plus `packages/data/test/validate.test.ts` asserting `validateSubscription`/`validateModel` reject a wrong-field-type fixture naming file and field — fails, functions do not exist.
-- [ ] 2.3 GREEN: implement `packages/data/src/types.ts`, `errors.ts` (`DataError`, `DataValidationError`), `yaml.ts` (parse with `{ schema: 'core', merge: false, maxAliasCount: 100 }`, no code-constructing tags), `validate.ts` (Ajv, `instancePath` rendered as dotted `field`) to pass 2.2.
-- [ ] 2.4 RED (threat matrix — untrusted contributor YAML): fixture test — an alias-bomb YAML is rejected without hanging; a symlinked file outside `data/` is rejected via `path.resolve` + `realpath` containment; `id: "../escape"` fails schema validation naming `id` — fails, no containment check yet.
-- [ ] 2.5 GREEN: implement `rootDir` resolution and realpath containment plus the alias-bomb guard in `yaml.ts`/loader entrypoint to pass 2.4.
-- [ ] 2.6 RED: property test `packages/data/test/strength-evidence.property.test.ts` (fast-check over six 0..3 ints crossed with evidence subsets) asserting a strength-3 axis without a non-empty `evidence.<axis>` fails, naming exactly the offending axis.
-- [ ] 2.7 GREEN: add the code-level Strength-3 axis check to `validate.ts` to pass 2.6.
-- [ ] 2.8 RED: table test `packages/data/test/budget-class.test.ts` for boundaries 199/200/499/500/5000/5001 and `null` caps; property test for monotonicity (fast-check over ascending thresholds and caps).
-- [ ] 2.9 GREEN: implement `packages/data/src/budget-class.ts` (`deriveBudgetClass`, pure, no I/O) to pass 2.8.
-- [ ] 2.10 Verify: `pnpm --filter @gentle-ai/profile-data test` and `pnpm -r typecheck` green.
+- [x] 2.1 Create `data/schemas/subscription.schema.json`, `data/schemas/model.schema.json` (2020-12, `additionalProperties: false`, six strength axes `integer 0..3`, six `allOf` Strength-3 evidence blocks, `id` pattern `^[a-z0-9][a-z0-9.\-]*$`).
+- [x] 2.2 RED: fixture pairs under `packages/data/test/fixtures/{valid,invalid}/` plus `packages/data/test/validate.test.ts` asserting `validateSubscription`/`validateModel` reject a wrong-field-type fixture naming file and field — fails, functions do not exist.
+- [x] 2.3 GREEN: implement `packages/data/src/types.ts`, `errors.ts` (`DataError`, `DataValidationError`), `yaml.ts` (parse with `{ schema: 'core', merge: false, maxAliasCount: 100 }`, no code-constructing tags), `validate.ts` (Ajv, `instancePath` rendered as dotted `field`) to pass 2.2.
+- [x] 2.4 RED (threat matrix — untrusted contributor YAML): fixture test — an alias-bomb YAML is rejected without hanging; a symlinked file outside `data/` is rejected via `path.resolve` + `realpath` containment; `id: "../escape"` fails schema validation naming `id` — fails, no containment check yet.
+- [x] 2.5 GREEN: implement `rootDir` resolution and realpath containment plus the alias-bomb guard in `yaml.ts`/loader entrypoint to pass 2.4.
+- [x] 2.6 RED: property test `packages/data/test/strength-evidence.property.test.ts` (fast-check over six 0..3 ints crossed with evidence subsets) asserting a strength-3 axis without a non-empty `evidence.<axis>` fails, naming exactly the offending axis.
+- [x] 2.7 GREEN: add the code-level Strength-3 axis check to `validate.ts` to pass 2.6.
+- [x] 2.8 RED: table test `packages/data/test/budget-class.test.ts` for boundaries 199/200/499/500/5000/5001 and `null` caps; property test for monotonicity (fast-check over ascending thresholds and caps).
+- [x] 2.9 GREEN: implement `packages/data/src/budget-class.ts` (`deriveBudgetClass`, pure, no I/O) to pass 2.8.
+- [x] 2.10 Verify: `pnpm --filter @gentle-ai/profile-data test` and `pnpm -r typecheck` green.
 
 ## Phase 3: Phases/Runtime/Override Schemas (Work Unit 3, PR 3)
 
