@@ -1,0 +1,5 @@
+lvl0: &lvl0 [x, x, x, x, x]
+lvl1: &lvl1 [*lvl0, *lvl0, *lvl0, *lvl0, *lvl0]
+lvl2: &lvl2 [*lvl1, *lvl1, *lvl1, *lvl1, *lvl1]
+lvl3: &lvl3 [*lvl2, *lvl2, *lvl2, *lvl2, *lvl2]
+lvl4: [*lvl3, *lvl3, *lvl3, *lvl3, *lvl3]
