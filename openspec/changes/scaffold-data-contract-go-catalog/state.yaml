@@ -1,0 +1,22 @@
+change: scaffold-data-contract-go-catalog
+issue: "#2"
+phase: tasks
+research_selected: true
+chain_strategy: stacked-to-main
+claude_code_agent_count: 19
+artifact_store: hybrid
+pace: auto
+delivery_strategy: auto-chain
+review_budget_lines: 400
+strict_tdd: true
+artifacts:
+  exploration: true
+  research: true
+  proposal: true
+  specs: true
+  design: true
+  tasks: true
+tasks_progress:
+  completed: []
+  pending: []
+last_updated: 2026-09-14

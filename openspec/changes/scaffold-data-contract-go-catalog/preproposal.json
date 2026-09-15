@@ -1,0 +1,77 @@
+{
+  "schema": "gentle-ai.sdd-preproposal/v1",
+  "revision": 3,
+  "change": "scaffold-data-contract-go-catalog",
+  "issue": "https://github.com/itrejomx/gentle-model-setup/issues/2",
+  "exploration": {
+    "outcome": "done",
+    "references": [
+      "openspec/changes/scaffold-data-contract-go-catalog/exploration.md",
+      "engram:sdd/scaffold-data-contract-go-catalog/explore#690"
+    ]
+  },
+  "research": {
+    "selected": true,
+    "request_id": "res-scaffold-go-catalog-001",
+    "classes": [
+      "open-web",
+      "documentation"
+    ],
+    "questions": [
+      "Which models does OpenCode Go currently list at opencode.ai/docs/go, with per-Plan caps or multipliers, as of today?",
+      "Which of the 18+ models named in the v2.2 source document (verified 2026-08-19) are still offered, renamed, or removed?"
+    ],
+    "admission": "granted: documentation, open-web",
+    "outcome": "done",
+    "evidence_references": [
+      "openspec/changes/scaffold-data-contract-go-catalog/research.md",
+      "engram:sdd/scaffold-data-contract-go-catalog/research"
+    ]
+  },
+  "product_decisions": {
+    "state": "confirmed",
+    "items": [
+      {
+        "id": "research-lane",
+        "question": "Run the live OpenCode Go catalog re-verification research lane before proposing?",
+        "options": [
+          "select",
+          "skip"
+        ],
+        "answer": "select"
+      },
+      {
+        "id": "claude-code-agent-count",
+        "question": "Claude Code runtime mapping count: 19 (live install, includes sdd-research) or 18 (as recorded in issue #2 and the PRD)?",
+        "options": [
+          "19",
+          "18"
+        ],
+        "answer": "19"
+      },
+      {
+        "id": "chain-strategy",
+        "question": "Chain strategy for the chained PRs auto-chain will produce.",
+        "options": [
+          "stacked-to-main",
+          "feature-branch-chain"
+        ],
+        "answer": "stacked-to-main"
+      }
+    ],
+    "confirmed_from_policy": [
+      {
+        "id": "review-budget",
+        "value": 400,
+        "source": "SDD session preflight policy; Engram #686 value of 800 is stale"
+      },
+      {
+        "id": "source-docs",
+        "value": "commit pandoc GFM conversions of both docx sources as repo fixtures",
+        "source": "PRD Further Notes"
+      }
+    ],
+    "confirmed_at": "2026-09-14"
+  },
+  "proposal_ready": true
+}

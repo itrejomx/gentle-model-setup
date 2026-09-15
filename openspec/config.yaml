@@ -1,0 +1,90 @@
+schema: spec-driven
+
+context: |
+  Planned stack: pnpm workspaces monorepo, TypeScript throughout.
+  packages/engine (pure TS, zero deps), packages/checker (TS, GitHub Action),
+  apps/site (Astro static + one React island), data/ (YAML + JSON Schema).
+  Architecture: static site + YAML data repo + pure TS engine + cron checker.
+  Testing: Vitest; property-based tests with fast-check. strict_tdd: true.
+  Glossary: CONTEXT.md. ADRs: docs/adr/. PRD: docs/prd/2026-09-14-model-profile-site.md.
+  Design: docs/superpowers/specs/2026-09-14-model-profile-site-design.md.
+  Repo has no source code yet; scaffolding is issue #2's job, not sdd-init's.
+
+project:
+  name: gentle-model-setup
+  status: brand-new — docs only, no source code, no package.json, no lockfile yet
+  planned_stack:
+    package_manager: pnpm (workspaces)
+    language: TypeScript
+    packages:
+      - path: packages/engine
+        description: pure TypeScript, zero runtime dependencies, no I/O
+      - path: packages/checker
+        description: TypeScript, runs as a GitHub Action (weekly cron + manual)
+      - path: apps/site
+        description: Astro static output, one React island for the picker
+      - path: data
+        description: YAML data validated by JSON Schema in CI
+    hosting: GitHub Pages (static)
+    ci: GitHub Actions
+  glossary: CONTEXT.md
+  adrs: docs/adr/
+  adrs_honored:
+    - docs/adr/0001-budget-class-is-data-not-money.md
+  prd: docs/prd/2026-09-14-model-profile-site.md
+  design_spec: docs/superpowers/specs/2026-09-14-model-profile-site-design.md
+  issue_tracker:
+    kind: github
+    repo: itrejomx/gentle-model-setup
+    parent_prd_issue: "#1"
+    slice_issues: "#2-#16"
+    first_change_issue: "#2"
+
+testing:
+  strict_tdd: true
+  planned_runner: vitest
+  property_testing: fast-check
+  test_command: pnpm test
+  validate_command: pnpm validate
+  coverage_threshold: 0
+  notes: >
+    No runner is installed yet (repo is docs-only). These are the PLANNED
+    testing capabilities per the PRD/design spec, to be scaffolded starting
+    with issue #2.
+
+language_contract: >
+  Generated technical artifacts (openspec files, code, comments, tests,
+  fixtures, UI copy defaults, delegated phase outputs) default to neutral
+  professional English regardless of conversation language, per the design
+  spec's English/Spanish site-copy split (site UI copy is bilingual by
+  product design; SDD/code artifacts are English).
+
+rules:
+  proposal:
+    - Use the vocabulary fixed in CONTEXT.md (Profile, Tier, Budget Class, Plan, etc.); avoid the terms CONTEXT.md marks as "Avoid".
+    - Respect docs/adr/0001-budget-class-is-data-not-money.md — Budget Class is always derived from data, never reasoned about by the engine.
+    - Include rollback plan for risky changes.
+    - Follow the build order in the PRD: data schema + OpenCode Go catalog, then engine, then site, then checker.
+  specs:
+    - Use Given/When/Then for scenarios.
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY).
+    - Keep engine specs I/O-free and dependency-free (packages/engine has zero runtime dependencies).
+  design:
+    - Document architecture decisions with rationale, honoring existing ADRs.
+    - Keep Reason Factors as typed codes, never prose, inside the engine (per design spec section 5).
+  tasks:
+    - Group by phase, use hierarchical numbering.
+    - Keep tasks completable in one session.
+    - Order tasks per PRD "Further Notes" build order (data schema first, engine second, site third, checker last).
+  apply:
+    guidelines:
+      - Follow existing code patterns once scaffolding exists (issue #2 onward).
+      - Strict TDD: one test at a time, vertical slices, no horizontal test-then-implement bulk.
+    tdd: true
+    test_command: pnpm test
+  verify:
+    test_command: pnpm test
+    build_command: pnpm build
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas.
