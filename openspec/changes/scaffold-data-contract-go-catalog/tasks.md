@@ -56,10 +56,10 @@ Chain strategy: stacked-to-main
 
 ## Phase 3: Phases/Runtime/Override Schemas (Work Unit 3, PR 3)
 
-- [ ] 3.1 Create `data/schemas/phases.schema.json`, `data/schemas/runtime.schema.json`, `data/schemas/override.schema.json` (group/callPattern/role/weights enums; `agentMap`/`prefixMap` as `additionalProperties: {type: string}, minProperties: 1`; `tier`/`requires`/`pr` enums).
-- [ ] 3.2 RED: fixture pairs plus a test asserting `validatePhases`, `validateRuntime`, `validateOverride` each reject a crafted invalid fixture (missing a `weights` axis; non-string `agentMap` value; `tier` outside enum).
-- [ ] 3.3 GREEN: implement the three validator functions in `validate.ts`/`index.ts` to pass 3.2.
-- [ ] 3.4 Verify: `pnpm --filter @gentle-ai/profile-data test` green.
+- [x] 3.1 Create `data/schemas/phases.schema.json`, `data/schemas/runtime.schema.json`, `data/schemas/override.schema.json` (group/callPattern/role/weights enums; `agentMap`/`prefixMap` as `additionalProperties: {type: string}, minProperties: 1`; `tier`/`requires`/`pr` enums).
+- [x] 3.2 RED: fixture pairs plus a test asserting `validatePhases`, `validateRuntime`, `validateOverride` each reject a crafted invalid fixture (missing a `weights` axis; non-string `agentMap` value; `tier` outside enum).
+- [x] 3.3 GREEN: implement the three validator functions in `validate.ts`/`index.ts` to pass 3.2.
+- [x] 3.4 Verify: `pnpm --filter @gentle-ai/profile-data test` green.
 
 ## Phase 4: Go Subscription + Source Fixtures (Work Unit 4, PR 4)
 
