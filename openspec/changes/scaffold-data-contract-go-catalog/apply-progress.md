@@ -416,3 +416,144 @@ item a reviewer may want to revisit.
 ### Status
 
 27/50 tasks complete (1.1–1.5, 2.1–2.10, 3.1–3.4, 4.1–4.4, 5.1–5.4). Ready for verify on Work Unit 5, or for `sdd-apply` to continue with Work Unit 6.
+
+## Work Unit 6 / Phase 6 (PR 6) — Complete
+
+Implemented the second catalog slice — 9 OpenCode Go models across
+alibaba (Qwen) and deepseek — on branch `feat/2-catalog-alibaba-deepseek`
+(stacked on `feat/2-catalog-moonshot-zhipu-xai-openai`, PR #22), committed
+as:
+
+- `caf6834 test(data): extend catalog test with alibaba/deepseek ids, promo and id-filename checks`
+- `081ec67 feat(data): OpenCode Go catalog, alibaba`
+- `9946e6a feat(data): OpenCode Go catalog, deepseek`
+- `f1a7d38 docs: mark work unit 6 tasks complete`
+
+### Task 6.1 — Live re-fetch
+
+Re-fetched `https://opencode.ai/docs/go` with `curl -sL` and cross-checked
+all 9 models against research.md's 2026-09-14 table: every 5h/weekly/
+monthly cap, `$` bucket, `deepseek-v4.1-flash`'s 4x promo note
+("4x · Ends Sep 20"), and privacy row matched exactly, including
+`qwen3.7-max`'s re-cap to 170 and `deepseek-v4-flash`'s re-cap to 13,000.
+The live privacy table states "Model training: Not used" and
+"Data retention: 0 days*" for all four DeepSeek rows, with a page
+footnote reading "DeepSeek: ZDR agreement is renewed monthly. The current
+agreement is valid through September 30, 2026." — this directly
+corroborates research.md C25 and the assignment's correction to task 6.3
+(`deepseek-v4-flash-vision-exp` is `trainsOnData: false`, not `true`). No
+live-vs-research discrepancies found for this slice; no `verifiedAt`
+adjustment was needed beyond `2026-09-14`.
+
+### Correction applied: task 6.3 / `deepseek-v4-flash-vision-exp` privacy
+
+The original task 6.3 text asserted `trainsOnData: true` for
+`deepseek-v4-flash-vision-exp`. This was wrong: research.md's catalog
+table shows Training Allowed = No for every DeepSeek row (only the Muse
+Spark Contributor models train on user data), and the live re-fetch
+(task 6.1) confirms "Model training: Not used" for this exact model.
+`tasks.md`'s task 6.3 line was edited to state the correction and record
+`trainsOnData: false`, `logRetentionDays: 0`; the model file was written
+with the corrected values from the start, not written wrong and then
+fixed.
+
+### Files Changed
+
+| File | Action | What Was Done |
+|------|--------|----------------|
+| `packages/data/test/catalog.test.ts` | Modified | Appended the 9 `ALIBABA_DEEPSEEK_IDS` to `EXPECTED_IDS`; extended `ModelDoc`'s `plans` shape with `requestsPer5h`/`multiplier`/`multiplierExpiresAt`; added an `id`-equals-filename assertion for every model (prior review advisory); added a dedicated test loading the real `data/subscriptions/opencode-go.yaml` thresholds and asserting `deepseek-v4.1-flash`'s stored `plans.go.requestsPer5h` is the base 6,500 (never the promo-scaled 26,000), `multiplier: 4`, `multiplierExpiresAt: 2026-09-20`, and that `deriveBudgetClass` on the base and on the promo-scaled value both resolve to `volume` |
+| `data/models/opencode-go/qwen3.8-max.yaml` | Created | alibaba, `current`, cap 160/5h ($15 bucket); `oneShotReasoning: 3` with evidence (ranked first in "Criterio de un disparo") |
+| `data/models/opencode-go/qwen3.8-flash.yaml` | Created | alibaba, `current`, cap 5,400/5h ($30 bucket); `cheap: 3` with evidence (cap exceeds workhorse ceiling); new since 2026-08-19 |
+| `data/models/opencode-go/qwen3.7-max.yaml` | Created | alibaba, `current`, cap 170/5h ($30 bucket), re-capped from 340 (research C16, confirmed live) |
+| `data/models/opencode-go/qwen3.7-plus.yaml` | Created | alibaba, `current`, cap 4,300/5h ($60 bucket) |
+| `data/models/opencode-go/qwen3.6-plus.yaml` | Created | alibaba, `legacy`, cap 3,300/5h ($60 bucket) |
+| `data/models/opencode-go/deepseek-v4.1-flash.yaml` | Created | deepseek, `current`, base cap 6,500/5h ($60 bucket), `multiplier: 4`/`multiplierExpiresAt: 2026-09-20`; `cheap: 3` with evidence; ZDR renewal note in comment |
+| `data/models/opencode-go/deepseek-v4-pro.yaml` | Created | deepseek, `current`, cap 1,050/5h ($15 bucket) |
+| `data/models/opencode-go/deepseek-v4-flash.yaml` | Created | deepseek, `current`, cap 13,000/5h ($30 bucket), re-capped from 7,600 (research C17, confirmed live); `cheap: 3` with evidence |
+| `data/models/opencode-go/deepseek-v4-flash-vision-exp.yaml` | Created | deepseek, `experimental`, cap 6,500/5h ($15 bucket), `trainsOnData: false`/`logRetentionDays: 0` per the corrected task 6.3; `cheap: 3` with evidence |
+| `openspec/changes/scaffold-data-contract-go-catalog/tasks.md` | Modified | Corrected task 6.3's privacy note; tasks 6.1–6.4 marked `[x]` |
+
+### Strength rating methodology
+
+Same methodology as Work Unit 5: `cheap` is derived mechanically from the
+subscription's own Budget Class thresholds (sniper→0, semi→1,
+workhorse→2, volume→3); the other five axes are scored from the
+practical per-dimension rankings in
+`data/sources/perfiles-sdd-opencode-go-only-v2.2.md` sections 2.1/2.2,
+reserving `3` only for a model explicitly ranked first in a named
+dimension. Of the 9 models in this slice, only `qwen3.8-max`
+(oneShotReasoning, "Criterio de un disparo: Qwen3.8 Max > Kimi K3 ≈ Grok
+4.5") meets that bar on a reasoning axis. `deepseek-v4-flash`'s 3rd-place
+appearance in the "Tasks" ranking ("Kimi K2.7 Code > Qwen3.7 Plus >
+Flash") and `deepseek-v4-pro`'s last-place appearance in "Criterio
+sostenible" were scored `codingTools: 1` / `sustainedReasoning: 1`
+respectively rather than `3`, consistent with the conservatism established
+in Work Unit 5 (a ranking appearance below first place does not earn a
+`3`). `deepseek-v4-flash`'s tied-first appearance in the "Archive/Cierre"
+dimension was deliberately NOT used as reasoning-axis evidence: that
+dimension is a cost/volume task category, not one of the six strength
+axes, and using it would conflate the mechanically-derived `cheap` axis
+with a manually-scored reasoning axis. `deepseek-v4-flash-vision-exp` (a
+new, undocumented vision variant) was scored `multimodal: 1` rather than
+`3` — its name implies multimodal capability, but no source describes its
+depth, and inventing a `3`-worthy evidence string from a model name alone
+would violate the evidence discipline this contract enforces.
+`effortVariants` is `["medium"]` for all 9: none of them appear configured
+with `high` effort in any per-phase table across either source document
+(unlike zhipu's GLM-5.3 in Work Unit 5).
+
+### TDD Cycle Evidence
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 6.2–6.3 (alibaba+deepseek) | `packages/data/test/catalog.test.ts` | Unit (data-driven, `it.each`) + 1 dedicated unit test | ✅ 173/173 pre-existing tests green before starting (10 moonshot/zhipu/xai/openai ids × existing assertions) | ✅ Written — 83 of 173 tests failed with `ENOENT` on the 9 new model paths (file-count test, per-id `it.each` assertions, and the new promo test) before any of the 9 files existed | ✅ 173/173 passed after adding all 9 model files | ✅ 9 distinct model fixtures across 2 labs, 2 statuses (`current`/`legacy`/`experimental` — 3 statuses across this slice), one file (`deepseek-v4.1-flash`) exercising the optional `multiplier`/`multiplierExpiresAt` schema fields for the first time in this repo | ➖ None needed — test structure already minimal and data-driven, reused unchanged from Work Unit 5 |
+
+### Test Summary
+
+- **Total tests written this unit**: 2 new `it`/`it.each` blocks (id-matches-filename, ×19 ids; the dedicated promo-multiplier test, ×1) = 20 new assertions in `catalog.test.ts`
+- **Total tests passing (package)**: 206 (173 in `catalog.test.ts`, 33 carried over in other files)
+- **Layers used**: Unit / data-driven (19 new `it.each` cases), Unit / dedicated (1 new promo-multiplier case)
+- **Approval tests** (refactoring): None — no refactoring tasks in this unit
+- **Pure functions created**: None new — reused `readYamlFile`, `validateModel`, `validateSubscription`, `deriveBudgetClass` unchanged
+
+### Work Unit Evidence
+
+| Evidence | Value |
+|---|---|
+| Focused test command and exact result | `pnpm --filter @gentle-ai/profile-data exec vitest run catalog` → `Test Files 1 passed (1)`, `Tests 173 passed (173)` |
+| Runtime harness command/scenario and exact result | Re-fetched `https://opencode.ai/docs/go` live via `curl -sL` (task 6.1) and cross-checked all 9 models' caps/buckets/privacy/promo note against research.md byte-for-byte — no discrepancies; the live footnote for DeepSeek's ZDR renewal (valid through 2026-09-30) directly corroborates research.md C25 |
+| Rollback boundary | `git revert f1a7d38 9946e6a 081ec67 caf6834` (in that order) removes all 9 model files and the `catalog.test.ts` extension, restoring exactly the Work Unit 5 state; nothing downstream (Phases 7–10) exists yet to depend on these files |
+
+### Deviations from Design
+
+None on schema shape or field names — all 9 files validate against
+`data/schemas/model.schema.json` unchanged, including
+`deepseek-v4.1-flash`'s use of the optional `multiplier`/
+`multiplierExpiresAt` plan fields exactly as documented in design.md's
+"Data shapes" section. The one correction applied — reversing task 6.3's
+draft `trainsOnData: true` note for `deepseek-v4-flash-vision-exp` to
+`false` — was instructed by the orchestrator at apply time based on
+research.md evidence and confirmed independently by the task 6.1 live
+re-fetch; it is a task-text correction, not a design deviation.
+
+### Issues Found
+
+None.
+
+### Remaining Tasks
+
+- [ ] Phase 7: Catalog — minimax/xiaomi/tencent/meituan/meta (Work Unit 7, PR 7) — tasks 7.1–7.4
+- [ ] Phase 8: Canonical Phases (Work Unit 8, PR 8) — tasks 8.1–8.3
+- [ ] Phase 9: Runtime Mappings (Work Unit 9, PR 9) — tasks 9.1–9.4
+- [ ] Phase 10: Bundle + CLI + CI (Work Unit 10, PR 10) — tasks 10.1–10.8
+
+### Workload / PR Boundary (Work Unit 6)
+
+- Mode: stacked PR slice (`stacked-to-main`, per tasks.md Review Workload Forecast)
+- Current work unit: Work Unit 6 (Phase 6), branch `feat/2-catalog-alibaba-deepseek` (stacked on `feat/2-catalog-moonshot-zhipu-xai-openai`, PR #22)
+- Boundary: starts from the Work Unit 5 state (10 moonshot/zhipu/xai/openai catalog files); ends with 9 additional validated catalog model files (alibaba + deepseek) and the extended data-driven test that covers all 19, both `pnpm -r typecheck` and `pnpm test` green
+- Estimated review budget impact: within budget — `git diff --stat feat/2-catalog-moonshot-zhipu-xai-openai..HEAD -- . ':(exclude)pnpm-lock.yaml'` = 284 authored insertions, 7 deletions, well under the 400-line default
+
+### Status
+
+31/50 tasks complete (1.1–1.5, 2.1–2.10, 3.1–3.4, 4.1–4.4, 5.1–5.4, 6.1–6.4). Ready for verify on Work Unit 6, or for `sdd-apply` to continue with Work Unit 7.
