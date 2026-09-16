@@ -1,0 +1,32 @@
+{
+  "$id": "https://itrejomx.github.io/gentle-model-setup/schemas/runtime.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "displayName", "agentMap", "prefixMap"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentMap": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "prefixMap": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}
