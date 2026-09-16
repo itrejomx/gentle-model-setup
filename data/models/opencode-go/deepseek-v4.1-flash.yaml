@@ -1,0 +1,33 @@
+id: deepseek-v4.1-flash
+subscription: opencode-go
+displayName: DeepSeek V4.1 Flash
+lab: deepseek
+status: current
+strengths: { oneShotReasoning: 0, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 3 }
+evidence:
+  cheap: >-
+    Base 5-hour cap of 6,500 exceeds the subscription's workhorse ceiling of
+    5,000 requests/5h, landing in the volume Budget Class tier
+    (data/subscriptions/opencode-go.yaml; live cap confirmed
+    https://opencode.ai/docs/go, verified 2026-09-14). New since the
+    2026-08-19 source document (research.md C21).
+# Zero-day retention, "0 days*" on the live page: DeepSeek's ZDR agreement is
+# renewed monthly and the agreement in force at verification time is valid
+# through 2026-09-30 (https://opencode.ai/docs/go, verified 2026-09-14;
+# research.md C25). Not modeled as a schema field — it is a renewal date on
+# a policy, not a per-model data value.
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    # requestsPer5h/Week/Month are the BASE caps, never the promo-scaled
+    # value; deriveBudgetClass() always reads this field, so the temporary
+    # 4x multiplier below never re-tiers this model.
+    requestsPer5h: 6500
+    requestsPerWeek: 16250
+    requestsPerMonth: 32500
+    monthlyUsdBucket: 60
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14
+    multiplier: 4
+    multiplierExpiresAt: 2026-09-20

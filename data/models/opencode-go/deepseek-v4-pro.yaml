@@ -1,0 +1,20 @@
+id: deepseek-v4-pro
+subscription: opencode-go
+displayName: DeepSeek V4 Pro
+lab: deepseek
+status: current
+strengths: { oneShotReasoning: 0, sustainedReasoning: 1, codingTools: 0, longContext: 0, multimodal: 0, cheap: 2 }
+# Zero-day retention, "0 days*" on the live page: DeepSeek's ZDR agreement is
+# renewed monthly and the agreement in force at verification time is valid
+# through 2026-09-30 (https://opencode.ai/docs/go, verified 2026-09-14;
+# research.md C25).
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 1050
+    requestsPerWeek: 2600
+    requestsPerMonth: 5200
+    monthlyUsdBucket: 15
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14
