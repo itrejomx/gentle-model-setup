@@ -1,0 +1,26 @@
+id: kimi-k2.7-code
+subscription: opencode-go
+displayName: Kimi K2.7 Code
+lab: moonshot
+status: current
+strengths: { oneShotReasoning: 1, sustainedReasoning: 2, codingTools: 3, longContext: 1, multimodal: 0, cheap: 2 }
+evidence:
+  codingTools: >-
+    Ranked first among Go catalog models on three separate practical
+    rankings: technical spec ("Spec técnica: Kimi K2.7 Code > GLM-5.3 > Luna
+    > Qwen3.7 Max"), daily tool-driven apply ("Apply diario/tools: Kimi
+    K2.7 Code > M3 > Qwen3.7 Plus"), and task breakdown ("Tasks: Kimi K2.7
+    Code > Qwen3.7 Plus > Flash")
+    (data/sources/perfiles-sdd-opencode-go-only-v2.2.md, section 2.2;
+    live cap 1,350 req/5h, $60 bucket, https://opencode.ai/docs/go,
+    verified 2026-09-14).
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 1350
+    requestsPerWeek: 3380
+    requestsPerMonth: 6750
+    monthlyUsdBucket: 60
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14

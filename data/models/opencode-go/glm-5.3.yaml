@@ -1,0 +1,26 @@
+id: glm-5.3
+subscription: opencode-go
+displayName: GLM-5.3
+lab: zhipu
+status: current
+strengths: { oneShotReasoning: 3, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 1 }
+evidence:
+  oneShotReasoning: >-
+    Ranked first for critical, few-call design decisions: "Design
+    crítico: GLM-5.3 (220, pocas llamadas) > GLM-5.2 > Qwen3.8 Max
+    (escalación) > M3" — same price per token as GLM-5.2 but a $15
+    monthly bucket (vs $60), reserved for semi-sniper single/few-call
+    roles, never loops
+    (data/sources/perfiles-sdd-opencode-go-only-v2.2.md, section 2.2;
+    live cap 220 req/5h, https://opencode.ai/docs/go, verified
+    2026-09-14).
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium, high]
+plans:
+  go:
+    requestsPer5h: 220
+    requestsPerWeek: 540
+    requestsPerMonth: 1080
+    monthlyUsdBucket: 15
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14

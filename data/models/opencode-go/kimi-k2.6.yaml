@@ -1,0 +1,16 @@
+id: kimi-k2.6
+subscription: opencode-go
+displayName: Kimi K2.6
+lab: moonshot
+status: legacy
+strengths: { oneShotReasoning: 0, sustainedReasoning: 1, codingTools: 1, longContext: 0, multimodal: 0, cheap: 2 }
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 1150
+    requestsPerWeek: 2880
+    requestsPerMonth: 5750
+    monthlyUsdBucket: 60
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14

@@ -1,0 +1,16 @@
+id: glm-5.1
+subscription: opencode-go
+displayName: GLM-5.1
+lab: zhipu
+status: legacy
+strengths: { oneShotReasoning: 1, sustainedReasoning: 1, codingTools: 1, longContext: 1, multimodal: 0, cheap: 2 }
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 880
+    requestsPerWeek: 2150
+    requestsPerMonth: 4300
+    monthlyUsdBucket: 60
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14
