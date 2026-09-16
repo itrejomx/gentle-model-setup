@@ -70,10 +70,10 @@ Chain strategy: stacked-to-main
 
 ## Phase 5: Catalog — moonshot/zhipu/xai/openai (Work Unit 5, PR 5)
 
-- [ ] 5.1 Re-fetch https://opencode.ai/docs/go; confirm current caps and status for these 10 models before authoring (design risk 1).
-- [ ] 5.2 RED: extend `packages/data/test/catalog.test.ts` (globs `data/models/opencode-go/*.yaml`) asserting these 10 files exist, validate, and each carries `verifiedAt: 2026-09-14`.
-- [ ] 5.3 GREEN: create `data/models/opencode-go/{kimi-k3,kimi-k2.7-code}.yaml` (moonshot, `status: current`) and `kimi-k2.6.yaml` (moonshot, `status: legacy`); `{glm-5.3-flash,glm-5.3,glm-5.2}.yaml` (zhipu, `current`) and `glm-5.1.yaml` (zhipu, `legacy`); `grok-4.6.yaml` (xai, `current`) and `grok-4.5.yaml` (xai, `legacy`); `gpt-5.6-luna.yaml` (openai, `current`) — each with `lab`, six strengths, `evidence` for any axis rated `3`, `privacy`, `effortVariants`, `plans.go` with `verifiedAt: 2026-09-14`.
-- [ ] 5.4 Verify: `pnpm --filter @gentle-ai/profile-data test -- catalog`.
+- [x] 5.1 Re-fetch https://opencode.ai/docs/go; confirm current caps and status for these 10 models before authoring (design risk 1).
+- [x] 5.2 RED: extend `packages/data/test/catalog.test.ts` (globs `data/models/opencode-go/*.yaml`) asserting these 10 files exist, validate, and each carries `verifiedAt: 2026-09-14`.
+- [x] 5.3 GREEN: create `data/models/opencode-go/{kimi-k3,kimi-k2.7-code}.yaml` (moonshot, `status: current`) and `kimi-k2.6.yaml` (moonshot, `status: legacy`); `{glm-5.3-flash,glm-5.3,glm-5.2}.yaml` (zhipu, `current`) and `glm-5.1.yaml` (zhipu, `legacy`); `grok-4.6.yaml` (xai, `current`) and `grok-4.5.yaml` (xai, `legacy`); `gpt-5.6-luna.yaml` (openai, `current`) — each with `lab`, six strengths, `evidence` for any axis rated `3`, `privacy`, `effortVariants`, `plans.go` with `verifiedAt: 2026-09-14`.
+- [x] 5.4 Verify: `pnpm --filter @gentle-ai/profile-data test -- catalog`.
 
 ## Phase 6: Catalog — alibaba/deepseek (Work Unit 6, PR 6)
 
