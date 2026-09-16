@@ -77,10 +77,10 @@ Chain strategy: stacked-to-main
 
 ## Phase 6: Catalog — alibaba/deepseek (Work Unit 6, PR 6)
 
-- [ ] 6.1 Re-fetch https://opencode.ai/docs/go; confirm current caps and status for these 9 models.
-- [ ] 6.2 RED: extend the catalog test for these 9 files plus a case asserting `deepseek-v4.1-flash`'s promo `multiplier`/`multiplierExpiresAt` (4x through 2026-09-20) does not change its derived Budget Class (derivation uses base `requestsPer5h`).
-- [ ] 6.3 GREEN: create `{qwen3.8-max,qwen3.8-flash,qwen3.7-max,qwen3.7-plus}.yaml` (alibaba, `current`) and `qwen3.6-plus.yaml` (alibaba, `legacy`); `{deepseek-v4.1-flash,deepseek-v4-pro,deepseek-v4-flash}.yaml` (deepseek, `current`) and `deepseek-v4-flash-vision-exp.yaml` (deepseek, `experimental`, `trainsOnData: true`).
-- [ ] 6.4 Verify: `pnpm --filter @gentle-ai/profile-data test -- catalog`.
+- [x] 6.1 Re-fetch https://opencode.ai/docs/go; confirm current caps and status for these 9 models.
+- [x] 6.2 RED: extend the catalog test for these 9 files plus a case asserting `deepseek-v4.1-flash`'s promo `multiplier`/`multiplierExpiresAt` (4x through 2026-09-20) does not change its derived Budget Class (derivation uses base `requestsPer5h`).
+- [x] 6.3 GREEN: create `{qwen3.8-max,qwen3.8-flash,qwen3.7-max,qwen3.7-plus}.yaml` (alibaba, `current`) and `qwen3.6-plus.yaml` (alibaba, `legacy`); `{deepseek-v4.1-flash,deepseek-v4-pro,deepseek-v4-flash}.yaml` (deepseek, `current`) and `deepseek-v4-flash-vision-exp.yaml` (deepseek, `experimental`, `trainsOnData: false`, `logRetentionDays: 0`). Correction (orchestrator, apply time): the original `trainsOnData: true` note for `deepseek-v4-flash-vision-exp` was wrong — research.md's live catalog table shows Training Allowed = No for every DeepSeek row (only the Muse Spark Contributor models train on user data); this task and the model file both use `trainsOnData: false`.
+- [x] 6.4 Verify: `pnpm --filter @gentle-ai/profile-data test -- catalog`.
 
 ## Phase 7: Catalog — minimax/xiaomi/tencent/meituan/meta (Work Unit 7, PR 7)
 
