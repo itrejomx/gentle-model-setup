@@ -191,3 +191,77 @@ None.
 ### Status
 
 19/50 tasks complete (1.1–1.5, 2.1–2.10, 3.1–3.4). Ready for verify on Work Unit 3, or for `sdd-apply` to continue with Work Unit 4.
+
+## Work Unit 4 / Phase 4 (PR 4) — Complete
+
+Encoded the OpenCode Go subscription (capped billing model, the four Budget
+Class thresholds, Plan `go`, catalog source URL, `verifiedAt`) and committed
+the two pandoc-converted source document fixtures as classification
+evidence, on branch `feat/2-go-subscription-fixtures` (stacked on
+`feat/2-phases-runtime-override-schemas`, PR #20), committed as:
+
+- `ec5dff9 feat(data): add OpenCode Go subscription with Budget Class thresholds`
+- `94777de docs(data): add source document fixtures`
+- `67fd4fa docs: mark work unit 4 tasks complete`
+
+### Files Changed
+
+| File | Action | What Was Done |
+|------|--------|---------------|
+| `data/subscriptions/opencode-go.yaml` | Created | `id: opencode-go`, `displayName: OpenCode Go`, `providerPrefix: opencode-go`, `billingModel: capped`, `budgetClass.derivedFrom: requestsPer5h` with thresholds `{sniper: 199, semi: 499, workhorse: 5000, volume: null}`, `plans: [{id: go, displayName: Go, priceUsdPerMonth: 10}]`, `catalogSourceUrl: https://opencode.ai/docs/go`, `verifiedAt: 2026-09-14` — matches design.md's worked example exactly, no Budget Class stored on the model side |
+| `packages/data/test/subscription-opencode-go.test.ts` | Created | Loads the real committed file via `readYamlFile(subscriptionPath, dataRoot)` (not a fixture copy, per design's "glob the real tree" testing strategy), asserting schema validity, `billingModel: capped`, ascending thresholds, Plan `go` present, `catalogSourceUrl`, `verifiedAt`, and `deriveBudgetClass` against the file's own thresholds for `220 → semi` and `1350 → workhorse` |
+| `data/sources/perfiles-sdd-opencode-go-only-v2.2.md` | Created | Pandoc GFM conversion of `Perfiles_SDD_OpenCode_Go_Only_v2.2.docx` (2026-08-19), copied from the read-only pre-converted scratchpad fixture |
+| `data/sources/gentle-ai-opencode-gpt-5.6.md` | Created | Pandoc GFM conversion of `Gentle AI OpenCode GPT 5.6.docx` (2026-07-22), copied from the read-only pre-converted scratchpad fixture |
+| `data/sources/README.md` | Created | States origin docx filenames, document dates, `pandoc -t gfm` conversion method, and that these files are evidence, never data consumed by the loader or schemas |
+| `openspec/changes/scaffold-data-contract-go-catalog/tasks.md` | Modified | Tasks 4.1–4.4 marked `[x]` |
+
+### TDD Cycle Evidence
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 4.1/4.2 | `test/subscription-opencode-go.test.ts` | Unit (data-driven, real tree) | N/A (new file) | ✅ Written — `YamlLoadError: unable to resolve path: ENOENT ... 'data/subscriptions'` (file did not exist) | ✅ Passed — 7/7 after creating `data/subscriptions/opencode-go.yaml` | ✅ 7 assertions across 5 `it`/`it.each` blocks (schema validity, billing model, thresholds, plan presence, catalog metadata, two `deriveBudgetClass` boundary cases: 220→semi, 1350→workhorse) | ➖ None needed — data file, no logic to extract |
+| 4.3 | N/A — fixture copy, no test targets fixture content | N/A | N/A (new files) | N/A — design and spec require the fixtures be present as evidence, not validated by a test; "Triangulation skipped: purely structural evidence files, no branching logic to exercise" | N/A | N/A | N/A |
+
+### Test Summary
+
+- **Total tests written this unit**: 7 (1 test file, `it`/`it.each` cases)
+- **Total tests passing (package)**: 40 (33 carried over from Work Units 1–3, plus 7 new)
+- **Layers used**: Unit / data-driven-against-real-tree (7 new; reads the actual committed `data/subscriptions/opencode-go.yaml`, not a copied fixture, per design's catalog testing strategy)
+- **Approval tests** (refactoring): None — no refactoring tasks in this unit
+- **Pure functions created**: None new — reused `readYamlFile`, `validateSubscription`, `deriveBudgetClass` from Work Unit 2 unchanged
+
+### Work Unit Evidence
+
+| Evidence | Value |
+|---|---|
+| Focused test command and exact result | `pnpm --filter @gentle-ai/profile-data exec vitest run subscription-opencode-go` → 1 file, 7 tests passed |
+| Runtime harness command/scenario and exact result | N/A — no network call in this slice; the subscription file is static, hand-authored data validated purely against the loader API with no I/O boundary beyond the filesystem read already exercised by `readYamlFile` |
+| Rollback boundary | `git revert 67fd4fa 94777de ec5dff9` (in that order) removes `data/subscriptions/opencode-go.yaml`, `packages/data/test/subscription-opencode-go.test.ts`, `data/sources/*`, and the tasks.md checkbox update, restoring exactly the Work Unit 3 state; nothing downstream (Phases 5–10) exists yet to depend on this subscription file |
+
+### Deviations from Design
+
+None — `data/subscriptions/opencode-go.yaml` matches design.md's "Data shapes" worked example byte-for-byte on structure (only `verifiedAt`'s date and the file's real location differ from the inline example, which already used the same value). The assignment's mention of window percentages (5h = 20% of monthly, weekly = 50%, monthly = 100%, research C1) is evidentiary context for *why* the thresholds are what they are; the subscription schema (`additionalProperties: false` on the `plans` item) has no field for per-window percentages, so none was added — adding one would have failed schema validation and contradicted the design's exact worked example.
+
+### Issues Found
+
+None.
+
+### Remaining Tasks
+
+- [ ] Phase 5: Catalog — moonshot/zhipu/xai/openai (Work Unit 5, PR 5) — tasks 5.1–5.4
+- [ ] Phase 6: Catalog — alibaba/deepseek (Work Unit 6, PR 6) — tasks 6.1–6.4
+- [ ] Phase 7: Catalog — minimax/xiaomi/tencent/meituan/meta (Work Unit 7, PR 7) — tasks 7.1–7.4
+- [ ] Phase 8: Canonical Phases (Work Unit 8, PR 8) — tasks 8.1–8.3
+- [ ] Phase 9: Runtime Mappings (Work Unit 9, PR 9) — tasks 9.1–9.4
+- [ ] Phase 10: Bundle + CLI + CI (Work Unit 10, PR 10) — tasks 10.1–10.8
+
+### Workload / PR Boundary
+
+- Mode: stacked PR slice (`stacked-to-main`, per tasks.md Review Workload Forecast)
+- Current work unit: Work Unit 4 (Phase 4), branch `feat/2-go-subscription-fixtures` (stacked on `feat/2-phases-runtime-override-schemas`, PR #20)
+- Boundary: starts from the Work Unit 3 state (phases/runtime/override schemas and validators); ends with the Go subscription file, its RED/GREEN test against the real committed tree, and both source document fixtures, all covered by passing tests and green typecheck
+- Estimated review budget impact: within budget — `git diff --stat feat/2-phases-runtime-override-schemas..HEAD` (lockfile and `data/sources/*` excluded per design's authored-line convention) = 78 insertions + 4 deletions = 78 authored lines net additions, well under the 400-line default
+
+### Status
+
+23/50 tasks complete (1.1–1.5, 2.1–2.10, 3.1–3.4, 4.1–4.4). Ready for verify on Work Unit 4, or for `sdd-apply` to continue with Work Unit 5.
