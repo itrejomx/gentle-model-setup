@@ -1,0 +1,9 @@
+tier: BALANCED
+phase: sdd-apply
+requires:
+  - opencode-go
+model: glm-5.2
+effort: medium
+reason: Cheaper axis coverage is sufficient for this phase on this subscription.
+author: itrejomx
+pr: https://github.com/itrejomx/gentle-model-setup/pull/1

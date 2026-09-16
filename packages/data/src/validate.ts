@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import type { ErrorObject } from "ajv";
+import type { ErrorObject, ValidateFunction } from "ajv";
 import type { DataError } from "./errors.js";
 
 /**
@@ -43,9 +43,17 @@ const subscriptionSchema = loadSchema(
   "../../../data/schemas/subscription.schema.json",
 );
 const modelSchema = loadSchema("../../../data/schemas/model.schema.json");
+const phasesSchema = loadSchema("../../../data/schemas/phases.schema.json");
+const runtimeSchema = loadSchema("../../../data/schemas/runtime.schema.json");
+const overrideSchema = loadSchema(
+  "../../../data/schemas/override.schema.json",
+);
 
 const validateSubscriptionSchema = ajv.compile(subscriptionSchema);
 const validateModelSchema = ajv.compile(modelSchema);
+const validatePhasesSchema = ajv.compile(phasesSchema);
+const validateRuntimeSchema = ajv.compile(runtimeSchema);
+const validateOverrideSchema = ajv.compile(overrideSchema);
 
 function instancePathToField(
   instancePath: string,
@@ -74,6 +82,16 @@ function toDataErrors(
       message: error.message ?? "validation failed",
     };
   });
+}
+
+function validateAgainstSchema(
+  validateFn: ValidateFunction,
+  doc: unknown,
+  file: string,
+): DataError[] {
+  const valid = validateFn(doc);
+  if (valid) return [];
+  return toDataErrors(file, validateFn.errors);
 }
 
 /**
@@ -117,14 +135,23 @@ function buildStrengthEvidenceError(
 }
 
 export function validateSubscription(doc: unknown, file: string): DataError[] {
-  const valid = validateSubscriptionSchema(doc);
-  if (valid) return [];
-  return toDataErrors(file, validateSubscriptionSchema.errors);
+  return validateAgainstSchema(validateSubscriptionSchema, doc, file);
 }
 
 export function validateModel(doc: unknown, file: string): DataError[] {
-  const valid = validateModelSchema(doc);
-  const schemaErrors = valid ? [] : toDataErrors(file, validateModelSchema.errors);
+  const schemaErrors = validateAgainstSchema(validateModelSchema, doc, file);
   const strengthErrors = checkStrengthEvidence(doc, file);
   return [...schemaErrors, ...strengthErrors];
+}
+
+export function validatePhases(doc: unknown, file: string): DataError[] {
+  return validateAgainstSchema(validatePhasesSchema, doc, file);
+}
+
+export function validateRuntime(doc: unknown, file: string): DataError[] {
+  return validateAgainstSchema(validateRuntimeSchema, doc, file);
+}
+
+export function validateOverride(doc: unknown, file: string): DataError[] {
+  return validateAgainstSchema(validateOverrideSchema, doc, file);
 }
