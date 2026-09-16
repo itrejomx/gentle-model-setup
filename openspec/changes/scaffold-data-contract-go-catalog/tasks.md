@@ -63,10 +63,10 @@ Chain strategy: stacked-to-main
 
 ## Phase 4: Go Subscription + Source Fixtures (Work Unit 4, PR 4)
 
-- [ ] 4.1 RED: `packages/data/test/subscription-opencode-go.test.ts` asserting `data/subscriptions/opencode-go.yaml` validates, `billingModel: capped`, thresholds ascend (sniper<200, semi<500, workhorse<=5000, volume>5000), Plan `go` present, `deriveBudgetClass(220, thresholds)` yields `semi` — fails, file missing.
-- [ ] 4.2 GREEN: create `data/subscriptions/opencode-go.yaml` per the design data shape, `catalogSourceUrl: https://opencode.ai/docs/go`, `verifiedAt: 2026-09-14`.
-- [ ] 4.3 Copy pandoc GFM conversions of `~/Downloads/Perfiles_SDD_OpenCode_Go_Only_v2.2.docx` (read-only) and `~/Downloads/Gentle AI OpenCode GPT 5.6.docx` (read-only), already converted at `/private/tmp/claude-501/-Users-itrejomx-Code-gentle-model-setup/7e64237b-ca39-4b00-b699-5ec00c06b60f/scratchpad/sources/*.md` (read-only), into `data/sources/*.md`.
-- [ ] 4.4 Verify: `pnpm --filter @gentle-ai/profile-data test -- subscription-opencode-go`.
+- [x] 4.1 RED: `packages/data/test/subscription-opencode-go.test.ts` asserting `data/subscriptions/opencode-go.yaml` validates, `billingModel: capped`, thresholds ascend (sniper<200, semi<500, workhorse<=5000, volume>5000), Plan `go` present, `deriveBudgetClass(220, thresholds)` yields `semi` — fails, file missing.
+- [x] 4.2 GREEN: create `data/subscriptions/opencode-go.yaml` per the design data shape, `catalogSourceUrl: https://opencode.ai/docs/go`, `verifiedAt: 2026-09-14`.
+- [x] 4.3 Copy pandoc GFM conversions of `~/Downloads/Perfiles_SDD_OpenCode_Go_Only_v2.2.docx` (read-only) and `~/Downloads/Gentle AI OpenCode GPT 5.6.docx` (read-only), already converted at `/private/tmp/claude-501/-Users-itrejomx-Code-gentle-model-setup/7e64237b-ca39-4b00-b699-5ec00c06b60f/scratchpad/sources/*.md` (read-only), into `data/sources/*.md`.
+- [x] 4.4 Verify: `pnpm --filter @gentle-ai/profile-data test -- subscription-opencode-go`.
 
 ## Phase 5: Catalog — moonshot/zhipu/xai/openai (Work Unit 5, PR 5)
 
