@@ -248,20 +248,171 @@ None.
 
 ### Remaining Tasks
 
-- [ ] Phase 5: Catalog — moonshot/zhipu/xai/openai (Work Unit 5, PR 5) — tasks 5.1–5.4
 - [ ] Phase 6: Catalog — alibaba/deepseek (Work Unit 6, PR 6) — tasks 6.1–6.4
 - [ ] Phase 7: Catalog — minimax/xiaomi/tencent/meituan/meta (Work Unit 7, PR 7) — tasks 7.1–7.4
 - [ ] Phase 8: Canonical Phases (Work Unit 8, PR 8) — tasks 8.1–8.3
 - [ ] Phase 9: Runtime Mappings (Work Unit 9, PR 9) — tasks 9.1–9.4
 - [ ] Phase 10: Bundle + CLI + CI (Work Unit 10, PR 10) — tasks 10.1–10.8
 
-### Workload / PR Boundary
+### Workload / PR Boundary (Work Unit 4)
 
 - Mode: stacked PR slice (`stacked-to-main`, per tasks.md Review Workload Forecast)
 - Current work unit: Work Unit 4 (Phase 4), branch `feat/2-go-subscription-fixtures` (stacked on `feat/2-phases-runtime-override-schemas`, PR #20)
 - Boundary: starts from the Work Unit 3 state (phases/runtime/override schemas and validators); ends with the Go subscription file, its RED/GREEN test against the real committed tree, and both source document fixtures, all covered by passing tests and green typecheck
 - Estimated review budget impact: within budget — `git diff --stat feat/2-phases-runtime-override-schemas..HEAD` (lockfile and `data/sources/*` excluded per design's authored-line convention) = 78 insertions + 4 deletions = 78 authored lines net additions, well under the 400-line default
 
+## Work Unit 5 / Phase 5 (PR 5) — Complete
+
+Implemented the first catalog slice — 10 OpenCode Go models across
+moonshot, zhipu, xai, and openai — on branch
+`feat/2-catalog-moonshot-zhipu-xai-openai` (stacked on
+`feat/2-go-subscription-fixtures`, PR #21), committed as:
+
+- `d29c490 test(data): data-driven catalog test for moonshot/zhipu/xai/openai slice`
+- `fb1d6dc feat(data): OpenCode Go catalog, moonshot and zhipu`
+- `62863c6 feat(data): OpenCode Go catalog, xai and openai`
+- (tasks.md checkbox commit follows this apply-progress update)
+
+### Task 5.1 — Live re-fetch
+
+Re-fetched `https://opencode.ai/docs/go` with `curl -sL` (server-rendered
+HTML, not client-only — the usage-limits and privacy tables are present
+in the raw response). Cross-checked all 9 live-present models against
+research.md's 2026-09-14 table: every 5h/weekly/monthly cap, `$` bucket,
+and privacy row (training/retention) matched exactly, including
+`grok-4.6` (169/423/845, $15, 30-day retention) and `gpt-5.6-luna`
+(2,050/5,100/10,250, $15, 30-day retention). `grok-4.5` remains **absent**
+from the live page (confirmed by a direct string search across the full
+fetched HTML) — corroborates research.md claim C18. No live-vs-research
+discrepancies found for this slice; no `verifiedAt` adjustment was
+needed beyond the task's specified `2026-09-14`.
+
+### Files Changed
+
+| File | Action | What Was Done |
+|------|--------|----------------|
+| `packages/data/test/catalog.test.ts` | Created | Data-driven test globbing `data/models/opencode-go/*.yaml`; asserts an extensible expected-id list, `validateModel` passes (naming file/field on failure via `toEqual([])`), all six strength axes present, non-empty `evidence.<axis>` for any axis rated 3, `privacy` shape, `status` enum, at least one `effortVariants` entry, and `plans.go.verifiedAt === "2026-09-14"` |
+| `data/models/opencode-go/kimi-k3.yaml` | Created | moonshot, `current`, cap 110/5h ($15 bucket); `oneShotReasoning: 2` |
+| `data/models/opencode-go/kimi-k2.7-code.yaml` | Created | moonshot, `current`, cap 1,350/5h ($60 bucket); `codingTools: 3` with evidence (top of three separate practical rankings: spec, apply diario/tools, tasks) |
+| `data/models/opencode-go/kimi-k2.6.yaml` | Created | moonshot, `legacy`, cap 1,150/5h ($60 bucket) |
+| `data/models/opencode-go/glm-5.3-flash.yaml` | Created | zhipu, `current`, cap 6,320/5h ($60 bucket); `cheap: 3` with evidence (cap exceeds the subscription's workhorse ceiling of 5,000 — lands in the `volume` Budget Class tier) |
+| `data/models/opencode-go/glm-5.3.yaml` | Created | zhipu, `current`, cap 220/5h ($15 bucket); `oneShotReasoning: 3` with evidence (ranked first for "Design crítico", few-call critical decisions) |
+| `data/models/opencode-go/glm-5.2.yaml` | Created | zhipu, `current`, cap 880/5h ($60 bucket); reuses design.md's worked example verbatim (`codingTools: 3` with its exact evidence string) |
+| `data/models/opencode-go/glm-5.1.yaml` | Created | zhipu, `legacy`, cap 880/5h ($60 bucket) |
+| `data/models/opencode-go/grok-4.6.yaml` | Created | xai, `current`, cap 169/5h ($15 bucket), 30-day log retention |
+| `data/models/opencode-go/grok-4.5.yaml` | Created | xai, `legacy`; see "Judgment call" below |
+| `data/models/opencode-go/gpt-5.6-luna.yaml` | Created | openai, `current`, cap 2,050/5h ($15 bucket), 30-day log retention |
+
+### Strength rating methodology
+
+- The `cheap` axis is derived directly and objectively from the
+  subscription's own Budget Class thresholds
+  (`data/subscriptions/opencode-go.yaml` — sniper<200 → 0, semi<500 → 1,
+  workhorse<=5000 → 2, volume>5000 → 3), so it is reproducible without
+  re-reading the narrative source documents and stays consistent with
+  design.md's `glm-5.2` worked example (cap 880 → workhorse → `cheap: 2`).
+- The other five axes (`oneShotReasoning`, `sustainedReasoning`,
+  `codingTools`, `longContext`, `multimodal`) were scored from the
+  practical per-dimension rankings in
+  `data/sources/perfiles-sdd-opencode-go-only-v2.2.md` section 2.2. A `3`
+  was reserved for a model that is explicitly ranked *first* in a
+  dimension ranking (glm-5.3 → Design crítico; kimi-k2.7-code →
+  codingTools, first in three separate rankings), matching the
+  conservatism of design.md's own `glm-5.2` example (which is ranked
+  first for "Criterio sostenible" but was still scored
+  `sustainedReasoning: 2`, not 3 — the design reserved 3 for the model's
+  single standout, quantitatively distinguishable strength). Models with
+  no ranking-table appearance (kimi-k2.6, glm-5.1 legacy; glm-5.3-flash,
+  new) were scored conservatively (0–1) rather than inferring quality
+  from cap size or lab family alone.
+- `effortVariants` used the assignment's "minimal valid set when unknown"
+  rule literally: `["medium"]` for every model whose only documented
+  effort is "default" across all per-phase configuration tables, and
+  `["medium", "high"]` for `glm-5.3` (the only model in this slice
+  explicitly configured with `high` effort in the HIGH profile's Design
+  row). `glm-5.2` reuses design.md's example verbatim (`[low, medium,
+  high]`).
+
+### Judgment call: `grok-4.5`
+
+`grok-4.5` is legacy and confirmed absent from the live
+`opencode.ai/docs/go` table (task 5.1 re-fetch, corroborating research.md
+C18) — no changelog or rename statement exists tying it to `grok-4.6`.
+Its `requestsPer5h: 120` comes from the 2026-08-19 source document. Per
+the assignment's explicit instruction, `requestsPerWeek` and
+`requestsPerMonth` are recorded as `null` (the schema types both fields
+as `["number", "null"]`) rather than invented, since neither source ever
+published them for this row.
+
+`monthlyUsdBucket` is a required, non-nullable `integer` in the schema
+and was **not** flagged by the assignment as an allowed-blocker field
+(only weekly/monthly caps were called out). No source publishes a bucket
+for `grok-4.5` directly (it predates the current $15/$30/$60 bucket
+table). It is set to `15` as a judgment call: every other model in this
+slice with a comparable sub-200 cap (`kimi-k3`, `glm-5.3`) is bucketed at
+`$15` on the live table, so `$15` is the best-evidenced inference
+available rather than a value read from either source document. This is
+documented in the file's own header comment for reviewer visibility. If
+this inference is rejected at review, the fix is a one-line change to
+`grok-4.5.yaml`'s `monthlyUsdBucket` and does not affect any other file
+in this slice.
+
+One further deviation from the narrative source: the assignment's
+explicit instruction sets `logRetentionDays: 0` for every model in this
+slice except `grok-4.6` and `gpt-5.6-luna` (30 days each), per research
+C22–C23. The 2026-08-19 source document separately claims "Grok 4.5 ...
+retiene logs 30 días" for the *old* catalog snapshot. Since `grok-4.5`
+is absent from the current live privacy table (there is nothing to
+re-verify), and the assignment's instruction is explicit and
+authoritative for this file set, `grok-4.5.yaml` was written with
+`logRetentionDays: 0` per the assignment rather than the older
+narrative claim. Flagged here for visibility, not treated as a
+blocker.
+
+### TDD Cycle Evidence
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 5.2–5.3 (moonshot+zhipu) | `packages/data/test/catalog.test.ts` | Unit (data-driven, `it.each`) | ✅ 114/114 pre-existing tests green before starting | ✅ Written — 81 tests failed with `ENOENT` on `data/models` (directory did not exist) | ✅ 56/81 passed after adding the 7 moonshot/zhipu files (remaining 25 failures were only the 3 not-yet-created xai/openai files) | ✅ 10 distinct model fixtures across 2 labs, 2 statuses (`current`/`legacy`), varying strength/evidence/privacy shapes | ➖ None needed — test structure is already minimal and data-driven |
+| 5.3 (xai+openai) | `packages/data/test/catalog.test.ts` | Unit (data-driven, `it.each`) | ✅ 56/81 passing baseline before adding the remaining 3 files | ✅ (test already written in 5.2; no new test code) | ✅ 81/81 passed after adding `grok-4.6`, `grok-4.5`, `gpt-5.6-luna` | ✅ `grok-4.5` triangulates the `null`-cap and non-`2026-09-14`-source path against the other 9 straightforward files | ➖ None needed |
+
+### Test Summary
+
+- **Total tests written**: 8 `it`/`it.each` blocks × 10 model ids (+1 file-count test) = 81 assertions in `catalog.test.ts`
+- **Total tests passing**: 81/81 (`catalog.test.ts`), 114/114 (full suite)
+- **Layers used**: Unit (81), Integration (0), E2E (0)
+- **Approval tests** (refactoring): None — no refactoring tasks
+- **Pure functions created**: 0 (this unit is pure data; reuses `readYamlFile`/`validateModel` from Work Unit 2)
+
+### Work Unit Evidence
+
+| Evidence | Value |
+|---|---|
+| Focused test command and exact result | `pnpm --filter @gentle-ai/profile-data exec vitest run catalog` → `Test Files 1 passed (1)`, `Tests 81 passed (81)` |
+| Runtime harness command/scenario and exact result | Re-fetched `https://opencode.ai/docs/go` live via `curl -sL` (task 5.1) and cross-checked all 9 live-present models' caps/buckets/privacy against research.md byte-for-byte — no discrepancies; `grok-4.5` confirmed absent from the live page by direct string search |
+| Rollback boundary | `git revert 62863c6 fb1d6dc d29c490` (in that order) removes all 10 model files and `catalog.test.ts`, restoring exactly the Work Unit 4 state; nothing downstream (Phases 6–10) exists yet to depend on these files |
+
+### Deviations from Design
+
+None on schema shape or field names — all 10 files validate against
+`data/schemas/model.schema.json` unchanged. See "Judgment call:
+`grok-4.5`" above for the two documented, reviewer-visible judgment
+calls (inferred `monthlyUsdBucket`, and following the assignment's
+explicit `logRetentionDays: 0` instruction over the older narrative
+source's `30` claim for this one legacy row).
+
+### Issues Found
+
+None blocking. The `grok-4.5` bucket inference above is the only open
+item a reviewer may want to revisit.
+
+### Workload / PR Boundary (Work Unit 5)
+
+- Mode: stacked PR slice (`stacked-to-main`, per tasks.md Review Workload Forecast)
+- Current work unit: Work Unit 5 (Phase 5), branch `feat/2-catalog-moonshot-zhipu-xai-openai` (stacked on `feat/2-go-subscription-fixtures`, PR #21)
+- Boundary: starts from the Work Unit 4 state (Go subscription file + source fixtures); ends with 10 validated catalog model files and the data-driven test that covers them, both `pnpm -r typecheck` and `pnpm test` green
+- Estimated review budget impact: within budget — `git diff --stat feat/2-go-subscription-fixtures..HEAD -- . ':(exclude)pnpm-lock.yaml'` = 330 authored insertions, 0 deletions, well under the 400-line default
+
 ### Status
 
-23/50 tasks complete (1.1–1.5, 2.1–2.10, 3.1–3.4, 4.1–4.4). Ready for verify on Work Unit 4, or for `sdd-apply` to continue with Work Unit 5.
+27/50 tasks complete (1.1–1.5, 2.1–2.10, 3.1–3.4, 4.1–4.4, 5.1–5.4). Ready for verify on Work Unit 5, or for `sdd-apply` to continue with Work Unit 6.
