@@ -2,7 +2,8 @@ import { readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { readYamlFile, validateModel } from "../src/index.js";
+import { deriveBudgetClass, readYamlFile, validateModel, validateSubscription } from "../src/index.js";
+import type { Threshold } from "../src/types.js";
 
 /**
  * Expected ids for the OpenCode Go catalog, grouped by the work unit that
@@ -24,7 +25,25 @@ const MOONSHOT_ZHIPU_XAI_OPENAI_IDS = [
   "gpt-5.6-luna",
 ] as const;
 
-const EXPECTED_IDS: readonly string[] = [...MOONSHOT_ZHIPU_XAI_OPENAI_IDS];
+/**
+ * Work Unit 6 (Phase 6): alibaba and deepseek.
+ */
+const ALIBABA_DEEPSEEK_IDS = [
+  "qwen3.8-max",
+  "qwen3.8-flash",
+  "qwen3.7-max",
+  "qwen3.7-plus",
+  "qwen3.6-plus",
+  "deepseek-v4.1-flash",
+  "deepseek-v4-pro",
+  "deepseek-v4-flash",
+  "deepseek-v4-flash-vision-exp",
+] as const;
+
+const EXPECTED_IDS: readonly string[] = [
+  ...MOONSHOT_ZHIPU_XAI_OPENAI_IDS,
+  ...ALIBABA_DEEPSEEK_IDS,
+];
 
 const STRENGTH_AXES = [
   "oneShotReasoning",
@@ -43,12 +62,25 @@ interface ModelDoc {
   evidence?: Record<string, string>;
   privacy: { trainsOnData: boolean; logRetentionDays: number | null };
   effortVariants: string[];
-  plans: Record<string, { verifiedAt: string }>;
+  plans: Record<
+    string,
+    {
+      verifiedAt: string;
+      requestsPer5h: number | null;
+      multiplier?: number;
+      multiplierExpiresAt?: string;
+    }
+  >;
+}
+
+interface SubscriptionDoc {
+  budgetClass: { derivedFrom: string; thresholds: Threshold[] };
 }
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dataRoot = resolve(here, "../../../data");
 const modelsDir = join(dataRoot, "models/opencode-go");
+const subscriptionPath = join(dataRoot, "subscriptions/opencode-go.yaml");
 
 function modelPath(id: string): string {
   return join(modelsDir, `${id}.yaml`);
@@ -113,5 +145,34 @@ describe("opencode-go catalog — moonshot/zhipu/xai/openai slice", () => {
   it.each(EXPECTED_IDS)("%s has plans.go.verifiedAt", (id) => {
     const doc = loadModel(id);
     expect(doc.plans["go"]?.verifiedAt).toBe("2026-09-14");
+  });
+
+  it.each(EXPECTED_IDS)("%s declares an id matching its filename", (id) => {
+    const doc = loadModel(id);
+    expect(doc.id).toBe(id);
+  });
+
+  it("deepseek-v4.1-flash's promo multiplier does not change its derived Budget Class", () => {
+    const subscription = readYamlFile(subscriptionPath, dataRoot) as SubscriptionDoc;
+    expect(validateSubscription(subscription, subscriptionPath)).toEqual([]);
+    const { thresholds } = subscription.budgetClass;
+
+    const doc = loadModel("deepseek-v4.1-flash");
+    const plan = doc.plans["go"];
+    // The stored value MUST be the base cap (6,500), never the promo-scaled
+    // 26,000 — the promo is recorded only via `multiplier`/`multiplierExpiresAt`.
+    expect(plan?.requestsPer5h).toBe(6500);
+    expect(plan?.multiplier).toBe(4);
+    expect(plan?.multiplierExpiresAt).toBe("2026-09-20");
+
+    const baseClass = deriveBudgetClass(plan?.requestsPer5h ?? null, thresholds);
+    const promotedRequestsPer5h = (plan?.requestsPer5h ?? 0) * (plan?.multiplier ?? 1);
+    const promotedClass = deriveBudgetClass(promotedRequestsPer5h, thresholds);
+
+    // Derivation uses the base (non-promo) requestsPer5h stored on the plan,
+    // never a value scaled by the temporary multiplier — so a promo never
+    // re-tiers a model into a different Budget Class.
+    expect(baseClass).toBe(promotedClass);
+    expect(baseClass).toBe("volume");
   });
 });
