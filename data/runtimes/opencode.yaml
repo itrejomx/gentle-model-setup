@@ -1,0 +1,48 @@
+# OpenCode's runtime mapping: which canonical Gentle AI phases OpenCode's
+# live `~/.config/opencode/opencode.json` install carries, what OpenCode
+# calls them, and how OpenCode spells subscription provider prefixes.
+#
+# `agentMap` was read (read-only, T9.1) from the `agent` object in that
+# config file on 2026-09-17. The config declares many more agent keys than
+# 20 (per-budget-tier variants suffixed `-oc-go`, `-oc-go-eco`, `-oc-go-hi`,
+# used for this repository's own model-routing experimentation, not for
+# phase identity), so `agentMap` is built from the real, base agent names the
+# primary `gentle-orchestrator` agent is actually permitted to delegate to
+# (its own `permission.task` allow-list), minus OpenCode's two built-in,
+# non-Gentle-AI agents (`explore`, `general`). That yields exactly 20 names,
+# each already spelled identically to its canonical phase id (identity
+# mapping). OpenCode's install has no `gentle-orchestrator`,
+# `gentle-ai-explore`, `gentle-ai-verify`, `gentle-ai-worker`, `sdd-remediate`,
+# `sdd-status`, or `sdd-sync` entry in this allow-list; those canonical
+# phases are simply omitted, which the spec states is not a validation
+# error.
+#
+# `prefixMap` translates `opencode-go` (the one committed subscription's
+# `providerPrefix`, data/subscriptions/opencode-go.yaml) as an identity
+# mapping — OpenCode is that subscription's own native runtime, so no
+# translation is needed, but the spec still requires at least one entry.
+id: opencode
+displayName: OpenCode
+agentMap:
+  jd-fix-agent: jd-fix-agent
+  jd-judge-a: jd-judge-a
+  jd-judge-b: jd-judge-b
+  review-readability: review-readability
+  review-refuter: review-refuter
+  review-reliability: review-reliability
+  review-resilience: review-resilience
+  review-risk: review-risk
+  review-validator: review-validator
+  sdd-apply: sdd-apply
+  sdd-archive: sdd-archive
+  sdd-design: sdd-design
+  sdd-explore: sdd-explore
+  sdd-init: sdd-init
+  sdd-onboard: sdd-onboard
+  sdd-propose: sdd-propose
+  sdd-research: sdd-research
+  sdd-spec: sdd-spec
+  sdd-tasks: sdd-tasks
+  sdd-verify: sdd-verify
+prefixMap:
+  opencode-go: opencode-go
