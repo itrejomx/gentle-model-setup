@@ -47,12 +47,12 @@ Out: engine (#3), other subscription catalogs (#4-#7), site, checker, deploy.
 
 ### Slice 7 — catalog minimax/xiaomi/tencent/meituan/meta (branch `feat/2-catalog-minimax-xiaomi-tencent-meituan-meta`)
 
-- [ ] T7.1 Re-fetch https://opencode.ai/docs/go; confirm current caps and status for these 10 models; total catalog reaches 29.
-- [ ] T7.2 RED: extend `packages/data/test/catalog.test.ts` asserting exactly 29 files total, 19 `current` / 6 `legacy` / 4 `experimental`; `minimax-m2.5` has no numeric `requestsPer5h` on any plan and therefore cannot be `current` (code check); `muse-spark-1.2-contributor` and `muse-spark-1.3-contributor` declare `trainsOnData: true` and `logRetentionDays: null`.
-- [ ] T7.3 GREEN: create `minimax-m3.yaml` (minimax, `current`), `minimax-m2.7.yaml` and `minimax-m2.5.yaml` (minimax, `legacy`); `mimo-v2.5.yaml` and `mimo-v2.5-pro.yaml` (xiaomi, `current`); `hy3.yaml` (tencent, `current`) and `hy4-preview.yaml` (tencent, `experimental`); `longcat-2.0.yaml` (meituan, `current`); `muse-spark-1.2-contributor.yaml` and `muse-spark-1.3-contributor.yaml` (meta, `experimental`, `logRetentionDays: null`).
-- [ ] T7.4 Verify: focused catalog run asserts 29/29 files, 19 current / 6 legacy / 4 experimental.
-- [ ] T7.5 (WU6 advisory) Strengthen the promo-invariance test so it cannot pass vacuously.
-- [ ] T7.6 (housekeeping) Fix the `grok-4.5.yaml` header comment so it matches the 30-day retention value (WU5 advisory).
+- [x] T7.1 Re-fetch https://opencode.ai/docs/go; confirm current caps and status for these 10 models; total catalog reaches 29.
+- [x] T7.2 RED: extend `packages/data/test/catalog.test.ts` asserting exactly 29 files total, 19 `current` / 6 `legacy` / 4 `experimental`; `minimax-m2.5` has no numeric `requestsPer5h` on any plan and therefore cannot be `current` (code check); `muse-spark-1.2-contributor` and `muse-spark-1.3-contributor` declare `trainsOnData: true` and `logRetentionDays: null`.
+- [x] T7.3 GREEN: create `minimax-m3.yaml` (minimax, `current`), `minimax-m2.7.yaml` and `minimax-m2.5.yaml` (minimax, `legacy`); `mimo-v2.5.yaml` and `mimo-v2.5-pro.yaml` (xiaomi, `current`); `hy3.yaml` (tencent, `current`) and `hy4-preview.yaml` (tencent, `experimental`); `longcat-2.0.yaml` (meituan, `current`); `muse-spark-1.2-contributor.yaml` and `muse-spark-1.3-contributor.yaml` (meta, `experimental`, `logRetentionDays: null`).
+- [x] T7.4 Verify: focused catalog run asserts 29/29 files, 19 current / 6 legacy / 4 experimental.
+- [x] T7.5 (WU6 advisory) Strengthen the promo-invariance test so it cannot pass vacuously.
+- [x] T7.6 (housekeeping) Fix the `grok-4.5.yaml` header comment so it matches the 30-day retention value (WU5 advisory).
 
 ### Slice 8 — canonical phases
 
@@ -99,8 +99,15 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 
 ## Progress
 
-- 2026-09-16: document created; slices 1-6 already delivered under SDD (PRs #17-#23, all open, all review-approved). No ODD task started yet.
+- 2026-09-16: document created; slices 1-6 already delivered under SDD (PRs #17-#23, all open, all review-approved).
+- 2026-09-16: slice 7 implemented (T7.1-T7.6), commits `5823504..92d782f`. Observed RED: focused catalog run, 95 failed / 172 passed, all `YamlLoadError ... ENOENT` for the 10 new ids. Observed GREEN: focused catalog run 267/267; `pnpm -r typecheck` exit 0; `pnpm test` 300/300 (re-run by the parent); 29 files, 19 current / 6 legacy / 4 experimental. T7.5 had no reachable RED of its own: the invariant already held in committed data, so no data was corrupted to force one. Native review and PR for this slice: pending.
+
+## Rationale for accepted judgment calls (slice 7)
+
+- `minimax-m2.5`: absent from the live model list, caps table, and training/retention table (present only in pricing and endpoint tables). Caps and `logRetentionDays` recorded as `null`; `trainsOnData: false` is inferred from its MiniMax siblings, not published. Open for maintainer confirmation.
+- `hy3`: the 2026-08-19 source described an 8x promo; the live page fetched 2026-09-16 shows no promo annotation, so the file carries the flat 4,300 cap with no multiplier.
+- New code check `checkCurrentRequiresCap` in `packages/data/src/validate.ts`: the schema types `requestsPer5h` as `number|null`, so it cannot reject a `current` model with no numeric cap.
 
 ## Next step
 
-Slice 7, T7.1.
+Slice 7 delivery boundary: native review, push, PR against `feat/2-catalog-alibaba-deepseek`. Then slice 8, T8.1.
