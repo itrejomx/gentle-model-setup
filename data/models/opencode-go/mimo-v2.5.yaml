@@ -1,0 +1,25 @@
+id: mimo-v2.5
+subscription: opencode-go
+displayName: MiMo V2.5
+lab: xiaomi
+status: current
+strengths: { oneShotReasoning: 0, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 3 }
+evidence:
+  cheap: >-
+    5-hour cap of 30,100 exceeds the subscription's workhorse ceiling of
+    5,000 requests/5h, landing in the volume Budget Class tier
+    (data/subscriptions/opencode-go.yaml budgetClass.thresholds;
+    https://opencode.ai/docs/go, verified 2026-09-14). Matches the
+    narrative source's "Volumen" role: "Archive, explore barato,
+    onboarding de volumen"
+    (data/sources/perfiles-sdd-opencode-go-only-v2.2.md, section 2.2).
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 30100
+    requestsPerWeek: 75200
+    requestsPerMonth: 150400
+    monthlyUsdBucket: 60
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14

@@ -1,0 +1,31 @@
+id: minimax-m3
+subscription: opencode-go
+displayName: MiniMax M3
+lab: minimax
+status: current
+strengths: { oneShotReasoning: 0, sustainedReasoning: 1, codingTools: 1, longContext: 3, multimodal: 3, cheap: 2 }
+evidence:
+  longContext: >-
+    "El caballo de contexto (1M + multimodal): explore/design/onboard" and
+    "1M context + multimodalidad sigue sin rival" — the 1M-token context
+    window is called out as unrivaled in the catalog, the reason MiniMax M3
+    wins the explore/design/onboard role across every profile
+    (data/sources/perfiles-sdd-opencode-go-only-v2.2.md, section 2.2 and the
+    "sdd-explore" role tables).
+  multimodal: >-
+    Same "1M context + multimodalidad sigue sin rival" claim bundles
+    multimodality into the unrivaled pair; MiniMax M3 is picked over
+    GLM-5.2/DeepSeek V4 Pro specifically for context plus multimodal quality
+    ("M3 gana por contexto + multimodalidad + cap razonable",
+    data/sources/gentle-ai-opencode-gpt-5.6.md, "Exploración / onboarding"
+    row).
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 3200
+    requestsPerWeek: 8000
+    requestsPerMonth: 16000
+    monthlyUsdBucket: 60
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14
