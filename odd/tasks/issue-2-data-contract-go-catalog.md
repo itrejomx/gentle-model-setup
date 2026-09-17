@@ -36,7 +36,7 @@ Out: engine (#3), other subscription catalogs (#4-#7), site, checker, deploy.
 - Test runner: Vitest through pnpm. Focused run:
   `pnpm --filter @gentle-ai/profile-data exec vitest run <pattern>`. Full: `pnpm test`.
 - Delivery: stacked-to-main PR chain, one PR per slice, base = previous slice branch.
-  Chain so far: #17 <- #18 <- #19 <- #20 <- #21 <- #22 <- #23.
+  Chain so far: #17 <- #18 <- #19 <- #20 <- #21 <- #22 <- #23 <- #24.
 - Receipt-driven development is on globally; native review runs per slice candidate with
   per-candidate consent (`--base-ref <previous branch> --committed-only`).
 - Conventional commits, no AI attribution trailers. Commits split as test / data or code / docs.
@@ -54,12 +54,14 @@ Out: engine (#3), other subscription catalogs (#4-#7), site, checker, deploy.
 - [x] T7.5 (WU6 advisory) Strengthen the promo-invariance test so it cannot pass vacuously.
 - [x] T7.6 (housekeeping) Fix the `grok-4.5.yaml` header comment so it matches the 30-day retention value (WU5 advisory).
 
-### Slice 8 — canonical phases
+### Slice 8 — canonical phases (branch `feat/2-canonical-phases`)
 
 - [ ] T8.1 RED: `packages/data/test/phases.test.ts` globbing `data/phases/phases.yaml` asserting exactly 27 rows, ids match the canonical list, every row has `callPattern`, `weights` summing > 0, and `role`.
 - [ ] T8.2 GREEN: create `data/phases/phases.yaml` with 27 rows (`group`, `callPattern`, `role`, six-axis `weights`). Per-phase weights have no source document; propose them with a one-line rationale comment per phase, to be revisited when `packages/engine` consumes them (#3).
 - [ ] T8.3 (WU3 advisory) Assert phase-id uniqueness in code or test; the schema cannot reject duplicates.
 - [ ] T8.4 Verify: focused `phases` run.
+- [ ] T8.5 (slice 7 advisory, time-sensitive: the only live promo ends 2026-09-20) Decouple the promo-invariance test in `packages/data/test/catalog.test.ts` from live data: prove the invariant with a synthetic promo-bearing fixture so the test keeps passing once no catalog model carries a multiplier.
+- [ ] T8.6 (slice 7 advisory) Fixture test calling `validateModel` directly for `checkCurrentRequiresCap`: a `current` model with several plans, some caps `null` and one numeric, is accepted; the all-null rejection asserts the message and the file, not only the `status` field.
 
 ### Slice 9 — runtime mappings
 
@@ -101,6 +103,7 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 
 - 2026-09-16: document created; slices 1-6 already delivered under SDD (PRs #17-#23, all open, all review-approved).
 - 2026-09-16: slice 7 implemented (T7.1-T7.6), commits `5823504..92d782f`. Observed RED: focused catalog run, 95 failed / 172 passed, all `YamlLoadError ... ENOENT` for the 10 new ids. Observed GREEN: focused catalog run 267/267; `pnpm -r typecheck` exit 0; `pnpm test` 300/300 (re-run by the parent); 29 files, 19 current / 6 legacy / 4 experimental. T7.5 had no reachable RED of its own: the invariant already held in committed data, so no data was corrupted to force one. Native review and PR for this slice: pending.
+- 2026-09-17: slice 7 native review approved and acknowledged (lineage `review-c8dc7c69d1c641ee`, reliability lens); two informational findings folded as T8.5 and T8.6. Pushed; PR #24 opened against `feat/2-catalog-alibaba-deepseek`.
 
 ## Rationale for accepted judgment calls (slice 7)
 
@@ -110,4 +113,4 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 
 ## Next step
 
-Slice 7 delivery boundary: native review, push, PR against `feat/2-catalog-alibaba-deepseek`. Then slice 8, T8.1.
+Slice 8, T8.1.
