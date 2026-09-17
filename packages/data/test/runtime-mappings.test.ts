@@ -10,11 +10,14 @@ import { readYamlFile, validateRuntime } from "../src/index.js";
  * (19) includes `sdd-research`, which the design spec text
  * (docs/superpowers/specs/2026-09-14-model-profile-site-design.md line 66,
  * "Claude Code 18") predates; the live install wins per maintainer decision
- * on 2026-09-14.
+ * on 2026-09-14. OpenCode's count (21) includes `gentle-orchestrator` per
+ * maintainer decision on 2026-09-17: OpenCode is the only runtime where the
+ * orchestrator is a configured agent with its own model; in the other three
+ * it is the active session model, so they carry no entry for it.
  */
 const EXPECTED_AGENT_MAP_COUNTS: Record<string, number> = {
   pi: 24,
-  opencode: 20,
+  opencode: 21,
   "claude-code": 19,
   codex: 17,
 };
@@ -162,6 +165,16 @@ describe("runtime mappings", () => {
   it("pi maps its sdd-proposal agent name to the canonical sdd-propose", () => {
     const doc = loadRuntime("pi");
     expect(doc.agentMap["sdd-proposal"]).toBe("sdd-propose");
+  });
+
+  // `gentle-orchestrator` is a canonical phase that only OpenCode can map:
+  // there it is a configured agent with its own model, while Pi, Claude
+  // Code, and Codex run the orchestrator as the active session model.
+  it("only opencode maps the gentle-orchestrator phase", () => {
+    const runtimesMappingOrchestrator = RUNTIME_IDS.filter((id) =>
+      Object.values(loadRuntime(id).agentMap).includes("gentle-orchestrator"),
+    );
+    expect(runtimesMappingOrchestrator).toEqual(["opencode"]);
   });
 
   // Pinned scenario from the runtime-mappings spec: Pi translates the
