@@ -1,0 +1,24 @@
+# Hy4 preview is new since the 2026-08-19 source document (not mentioned in
+# either narrative fixture). It is fully published on the live
+# opencode.ai/docs/go page (pricing, 5h/week/month caps, and privacy row
+# all present, verified 2026-09-14), same as Hy3, but its "preview" suffix
+# marks it as a pre-release build rather than a stable release — the same
+# convention already used for deepseek-v4-flash-vision-exp's "Exp" suffix
+# in this catalog. `status: experimental` follows that naming convention,
+# not an absence from the live table.
+id: hy4-preview
+subscription: opencode-go
+displayName: Hy4 Preview
+lab: tencent
+status: experimental
+strengths: { oneShotReasoning: 0, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 2 }
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 1350
+    requestsPerWeek: 3380
+    requestsPerMonth: 6770
+    monthlyUsdBucket: 30
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14
