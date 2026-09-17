@@ -138,10 +138,45 @@ export function validateSubscription(doc: unknown, file: string): DataError[] {
   return validateAgainstSchema(validateSubscriptionSchema, doc, file);
 }
 
+/**
+ * `status: current` requires at least one plan with a numeric
+ * `requestsPer5h`. The schema types `requestsPer5h` as `number | null` to
+ * allow unpublished caps on `legacy`/`experimental` rows, so it cannot by
+ * itself reject a `current` model whose every plan has a `null` cap
+ * (minimax-m2.5: absent from the live requests table). This check closes
+ * that gap.
+ */
+function checkCurrentRequiresCap(doc: unknown, file: string): DataError[] {
+  if (typeof doc !== "object" || doc === null) return [];
+  const record = doc as Record<string, unknown>;
+  if (record["status"] !== "current") return [];
+
+  const plans = record["plans"];
+  if (typeof plans !== "object" || plans === null) return [];
+  const hasNumericCap = Object.values(plans as Record<string, unknown>).some(
+    (plan) => {
+      if (typeof plan !== "object" || plan === null) return false;
+      const requestsPer5h = (plan as Record<string, unknown>)["requestsPer5h"];
+      return typeof requestsPer5h === "number";
+    },
+  );
+  if (hasNumericCap) return [];
+
+  return [
+    {
+      file,
+      field: "status",
+      message:
+        'status "current" requires at least one plan with a numeric requestsPer5h, but every plan has requestsPer5h: null',
+    },
+  ];
+}
+
 export function validateModel(doc: unknown, file: string): DataError[] {
   const schemaErrors = validateAgainstSchema(validateModelSchema, doc, file);
   const strengthErrors = checkStrengthEvidence(doc, file);
-  return [...schemaErrors, ...strengthErrors];
+  const capErrors = checkCurrentRequiresCap(doc, file);
+  return [...schemaErrors, ...strengthErrors, ...capErrors];
 }
 
 export function validatePhases(doc: unknown, file: string): DataError[] {
