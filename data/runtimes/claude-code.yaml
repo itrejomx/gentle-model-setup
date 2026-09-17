@@ -7,9 +7,14 @@
 # its canonical phase id (data/phases/phases.yaml) — every entry is an
 # identity mapping, since Claude Code already spells `sdd-propose` (and
 # every other phase name) canonically. This count (19) includes
-# `sdd-research`; the frozen design spec text (design.md's own worked
-# example comment: "Pi 24, OpenCode 20, Claude Code 19, Codex 17") already
-# matches the live install exactly. Claude Code's install has no
+# `sdd-research`, which the design spec text
+# (docs/superpowers/specs/2026-09-14-model-profile-site-design.md, "Claude
+# Code 18") predates; the frozen openspec design.md's own worked example
+# comment ("Pi 24, OpenCode 20, Claude Code 19, Codex 17") already matches
+# this file's Claude Code count but is now stale on OpenCode too: OpenCode
+# is 21, not 20, per the maintainer decision recorded in
+# packages/data/test/runtime-mappings.test.ts (`gentle-orchestrator`,
+# 2026-09-17). Claude Code's install has no
 # `gentle-orchestrator`, `gentle-ai-explore`, `gentle-ai-verify`,
 # `gentle-ai-worker`, `review-validator`, `sdd-remediate`, `sdd-status`, or
 # `sdd-sync` file; those canonical phases are simply omitted, which the spec

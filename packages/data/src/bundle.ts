@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { deriveBudgetClass } from "./budget-class.js";
 import { canonicalJson } from "./canonical.js";
-import { BundleHashMismatchError } from "./errors.js";
+import { BundleHashMismatchError, DataValidationError } from "./errors.js";
+import { checkCrossFileIntegrity } from "./integrity.js";
 import type {
   Bundle,
   BundleModelPlan,
@@ -50,11 +51,20 @@ function injectBudgetClasses(data: DataSet): BundleModelRecord[] {
 }
 
 /**
- * Assembles a hashed bundle from a validated {@link DataSet}: injects every
- * model plan's derived Budget Class, canonicalizes the result, and hashes
- * it.
+ * Assembles a hashed bundle from a validated {@link DataSet}: runs the
+ * cross-file integrity checks no single-file validator can express
+ * (`checkCrossFileIntegrity` — a runtime's `agentMap`/`prefixMap` against
+ * `phases.yaml`/the committed subscriptions), injects every model plan's
+ * derived Budget Class, canonicalizes the result, and hashes it. Throws
+ * {@link DataValidationError} aggregating every integrity error found —
+ * never a partial or incorrect bundle.
  */
 export function buildBundle(data: DataSet): Bundle {
+  const integrityErrors = checkCrossFileIntegrity(data);
+  if (integrityErrors.length > 0) {
+    throw new DataValidationError(integrityErrors);
+  }
+
   const payload: BundlePayload = {
     subscriptions: data.subscriptions,
     models: injectBudgetClasses(data),
