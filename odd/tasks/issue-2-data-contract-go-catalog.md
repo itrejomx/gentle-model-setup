@@ -65,13 +65,13 @@ Out: engine (#3), other subscription catalogs (#4-#7), site, checker, deploy.
 
 ### Slice 9 — runtime mappings (branch `feat/2-runtime-mappings`)
 
-- [ ] T9.1 Read live installs (read-only) at `~/.pi/agent/agents/`, `~/.config/opencode/opencode.json`, `~/.claude/agents/`, `~/.codex/agents/` to fill each `agentMap`.
-- [ ] T9.2 RED: `packages/data/test/runtime-mappings.test.ts` asserting `agentMap` entry counts Pi 24, OpenCode 20, Claude Code 19, Codex 17; every `agentMap` value resolves to a phase id in `phases.yaml`; every `prefixMap` key is a known provider prefix.
-- [ ] T9.3 GREEN: create `data/runtimes/pi.yaml` (24 entries; `sdd-proposal` is the Pi phase mapped to canonical `sdd-propose`; `prefixMap` maps `openai` to `openai-codex`), `data/runtimes/opencode.yaml` (20), `data/runtimes/claude-code.yaml` (19), `data/runtimes/codex.yaml` (17).
-- [ ] T9.4 Verify: focused `runtime-mappings` run.
-- [ ] T9.5 (slice 8 advisory) `packages/data/test/phases.test.ts`: assert each id sits in its canonical group by iterating the per-group id constants.
-- [ ] T9.6 (slice 8 advisory) `phases.test.ts`: pin the judgment-call rows (`jd-fix-agent` implementer, `gentle-ai-worker` implementer, `gentle-ai-verify` verifier, `sdd-remediate` loop) and assert every `weights` map sums to 1.0, as the `phases.yaml` header states.
-- [ ] T9.7 (slice 8 advisory) `packages/data/test/validate.test.ts`: the all-null-caps rejection compares the full expected error list (field, message, count); the duplicate-id test also checks the "first declared at" index.
+- [x] T9.1 Read live installs (read-only) at `~/.pi/agent/agents/`, `~/.config/opencode/opencode.json`, `~/.claude/agents/`, `~/.codex/agents/` to fill each `agentMap`.
+- [x] T9.2 RED: `packages/data/test/runtime-mappings.test.ts` asserting `agentMap` entry counts Pi 24, OpenCode 21 (was 20; see slice 9 rationale), Claude Code 19, Codex 17; every `agentMap` value resolves to a phase id in `phases.yaml`; every `prefixMap` key is a known provider prefix.
+- [x] T9.3 GREEN: create `data/runtimes/pi.yaml` (24 entries; `sdd-proposal` is the Pi phase mapped to canonical `sdd-propose`; `prefixMap` maps `openai` to `openai-codex`), `data/runtimes/opencode.yaml` (21), `data/runtimes/claude-code.yaml` (19), `data/runtimes/codex.yaml` (17).
+- [x] T9.4 Verify: focused `runtime-mappings` run.
+- [x] T9.5 (slice 8 advisory) `packages/data/test/phases.test.ts`: assert each id sits in its canonical group by iterating the per-group id constants.
+- [x] T9.6 (slice 8 advisory) `phases.test.ts`: pin the judgment-call rows (`jd-fix-agent` implementer, `gentle-ai-worker` implementer, `gentle-ai-verify` verifier, `sdd-remediate` loop) and assert every `weights` map sums to 1.0, as the `phases.yaml` header states.
+- [x] T9.7 (slice 8 advisory) `packages/data/test/validate.test.ts`: the all-null-caps rejection compares the full expected error list (field, message, count); the duplicate-id test also checks the "first declared at" index.
 
 ### Slice 10 — bundle, CLI, CI
 
@@ -90,13 +90,14 @@ Out: engine (#3), other subscription catalogs (#4-#7), site, checker, deploy.
 
 - [ ] TC.1 Docs fix: `docs/superpowers/specs/2026-09-14-model-profile-site-design.md` line 87 thresholds vs the proposal.
 - [ ] TC.3 Before archiving, correct the role summary sentence in the frozen `specs/canonical-phases/spec.md` (lines 49-52): it omits `jd-fix-agent: implementer`, `gentle-ai-verify: verifier`, and `gentle-ai-worker: implementer`, which the design spec table it defers to assigns.
+- [ ] TC.4 Before archiving, correct the OpenCode count (20 -> 21, with `gentle-orchestrator`) in the frozen SDD spec, design, and tasks, and in `docs/superpowers/specs/2026-09-14-model-profile-site-design.md` section 3.2.
 - [ ] TC.2 Run `sdd-archive` for `scaffold-data-contract-go-catalog` with final-state facts (requires explicit maintainer go-ahead).
 
 ## Acceptance criteria
 
 - `pnpm validate && pnpm test && pnpm build` pass on the slice 10 branch.
 - 29 catalog files: 19 current / 6 legacy / 4 experimental.
-- `phases.yaml` has 27 unique phase ids; runtime maps count Pi 24, OpenCode 20, Claude Code 19, Codex 17.
+- `phases.yaml` has 27 unique phase ids; runtime maps count Pi 24, OpenCode 21, Claude Code 19, Codex 17.
 - Bundle hash is order-invariant and tamper-evident; CI workflow green on its own PR.
 
 ## Per-slice checks
@@ -111,6 +112,12 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 - 2026-09-17: slice 7 native review approved and acknowledged (lineage `review-c8dc7c69d1c641ee`, reliability lens); two informational findings folded as T8.5 and T8.6. Pushed; PR #24 opened against `feat/2-catalog-alibaba-deepseek`.
 - 2026-09-17: slice 8 implemented (T8.1-T8.6), commits `e8f5cb6..3ecba14`. Observed RED: focused phases run 116/116 failed (`YamlLoadError ENOENT ... data/phases`); focused validate run 1/13 failed ("rejects a duplicate phase id", no uniqueness check yet). T8.5 and T8.6 had no reachable RED: they pin behavior that was already correct (`deriveBudgetClass` ignores the multiplier; `checkCurrentRequiresCap` accepts partial-null plans). Observed GREEN: phases 116/116; catalog 268/268; `pnpm -r typecheck` exit 0; `pnpm test` 420/420 (re-run by the parent). Diff vs slice 7: 10 files, 638 insertions, 15 deletions; over the ~400-line heuristic because `phases.yaml` carries a rationale comment per phase and the slice absorbed two advisory items; not split. Native review and PR: pending.
 - 2026-09-17: slice 8 native review approved and acknowledged (lineage `review-c2712fe1cfe18541`, reliability lens); five informational findings. The parent verified the two promo findings against the source: T8.5 reopened and moved to T10.2b; the other three folded as T9.5-T9.7. Pushed; PR #25 opened against `feat/2-catalog-minimax-xiaomi-tencent-meituan-meta`.
+- 2026-09-17: slice 9 implemented (T9.1-T9.7), commits `54dd1d3..HEAD` of `feat/2-runtime-mappings`. Observed RED: focused runtime-mappings run 26/26 failed (`YamlLoadError ENOENT ... data/runtimes`). T9.5-T9.7 pin already-correct behavior, so each new assertion was proven by a reverted local mutation (wrong group, wrong role, broken weight sum, extra fixture field, shifted duplicate index): every mutation made the new assertion fail. The parent's cross-check against the live `opencode.json` found the writer had dropped `gentle-orchestrator`; after the maintainer's decision a second RED was observed (2 failed: "expected 20 to be 21", "expected [] to deeply equal ['opencode']") and then GREEN. Final: runtime-mappings 27/27; `pnpm -r typecheck` exit 0; `pnpm test` all passing (run by the parent); no private strings in `data/runtimes/`. Native review and PR: pending.
+
+## Rationale for accepted judgment calls (slice 9)
+
+- OpenCode maps 21 agents, not 20 (maintainer decision 2026-09-17). The live config has 23 base agent keys (ignoring the `-oc-go*` tier variants); minus the builtins `explore` and `general` that is 21, including `gentle-orchestrator`. OpenCode is the only runtime where the orchestrator is a configured agent with its own model; in Pi, Claude Code, and Codex it is the active session model, so they carry no entry. A test pins that only OpenCode maps that phase.
+- Known provider prefixes are `opencode-go` (the one committed subscription) and `openai` (the design's worked example; no `openai` subscription file exists yet). A later subscription slice (#4-#7) should confirm or replace the list.
 
 ## Rationale for accepted judgment calls (slice 8)
 
@@ -126,4 +133,4 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 
 ## Next step
 
-Slice 9, T9.1.
+Slice 9 delivery boundary: native review, then push and PR against `feat/2-canonical-phases` on maintainer go-ahead. Then slice 10, T10.1.
