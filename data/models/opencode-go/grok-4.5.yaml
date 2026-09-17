@@ -25,7 +25,14 @@ evidence:
     (data/sources/perfiles-sdd-opencode-go-only-v2.2.md, section 2.2;
     5-hour cap 120 per the 2026-08-19 source document — this model is
     absent from the 2026-09-14 live table, see research.md C18).
-privacy: { trainsOnData: false, logRetentionDays: 30 }  # 30-day log retention per the 2026-08-19 source (section 2, privacy note)
+# Log retention corrected to 30 days per the 2026-08-19 source document,
+# section 2 privacy note ("Grok 4.5 ... retiene logs 30 días"). Work Unit 5
+# had originally followed the assignment's blanket `logRetentionDays: 0`
+# instruction over that narrative claim, since grok-4.5 is absent from the
+# live 2026-09-14 privacy table and there is nothing to re-verify against
+# (apply-progress.md, "Judgment call: grok-4.5"); this value replaces that
+# earlier choice with the only concrete evidence that actually exists.
+privacy: { trainsOnData: false, logRetentionDays: 30 }
 effortVariants: [medium]
 plans:
   go:
