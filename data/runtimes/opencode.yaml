@@ -4,18 +4,23 @@
 #
 # `agentMap` was read (read-only, T9.1) from the `agent` object in that
 # config file on 2026-09-17. The config declares many more agent keys than
-# 20 (per-budget-tier variants suffixed `-oc-go`, `-oc-go-eco`, `-oc-go-hi`,
-# used for this repository's own model-routing experimentation, not for
-# phase identity), so `agentMap` is built from the real, base agent names the
-# primary `gentle-orchestrator` agent is actually permitted to delegate to
-# (its own `permission.task` allow-list), minus OpenCode's two built-in,
-# non-Gentle-AI agents (`explore`, `general`). That yields exactly 20 names,
-# each already spelled identically to its canonical phase id (identity
-# mapping). OpenCode's install has no `gentle-orchestrator`,
-# `gentle-ai-explore`, `gentle-ai-verify`, `gentle-ai-worker`, `sdd-remediate`,
-# `sdd-status`, or `sdd-sync` entry in this allow-list; those canonical
-# phases are simply omitted, which the spec states is not a validation
-# error.
+# 21 (per-budget-tier variants suffixed `-oc-go`, `-oc-go-eco`, `-oc-go-hi`,
+# used for the maintainer's own model-routing experimentation, not for
+# phase identity), so `agentMap` is built from the base agent keys (the ones
+# without a tier suffix), minus OpenCode's two built-in, non-Gentle-AI agents
+# (`explore`, `general`). That yields 21 names, each already spelled
+# identically to its canonical phase id (identity mapping).
+#
+# `gentle-orchestrator` is included per maintainer decision on 2026-09-17:
+# OpenCode is the only supported runtime where the orchestrator is a
+# configured agent with its own model. In Pi, Claude Code, and Codex the
+# orchestrator is the active session model, so their mappings carry no entry
+# for it.
+#
+# OpenCode's install has no `gentle-ai-explore`, `gentle-ai-verify`,
+# `gentle-ai-worker`, `sdd-remediate`, `sdd-status`, or `sdd-sync` agent;
+# those canonical phases are simply omitted, which the spec states is not a
+# validation error.
 #
 # `prefixMap` translates `opencode-go` (the one committed subscription's
 # `providerPrefix`, data/subscriptions/opencode-go.yaml) as an identity
@@ -24,6 +29,7 @@
 id: opencode
 displayName: OpenCode
 agentMap:
+  gentle-orchestrator: gentle-orchestrator
   jd-fix-agent: jd-fix-agent
   jd-judge-a: jd-judge-a
   jd-judge-b: jd-judge-b
