@@ -1,5 +1,7 @@
 # Tasks: Scaffold data contract and OpenCode Go catalog
 
+> Frozen 2026-09-16 after Work Unit 6: slices 7-10 continue under Organic Driven Development. Progress lives in `odd/tasks/issue-2-data-contract-go-catalog.md`; this file is read-only reference until `sdd-archive` runs after slice 10.
+
 ## Review Workload Forecast
 
 | Field | Value |
