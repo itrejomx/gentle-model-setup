@@ -122,6 +122,27 @@ describe("validateModel", () => {
     expect(statusError?.file).toBe("model.yaml");
     expect(statusError?.message).toBe(expected[0]?.message);
   });
+
+  // T9.7 (slice 8 advisory): compare the FULL expected error list (field,
+  // message, and count), not only that a matching status error exists among
+  // possibly others. This fixture is otherwise schema-valid, so the all-null
+  // caps rejection must be the only error.
+  it("rejects a current model whose every plan has a null cap, matching the full expected error list", () => {
+    const doc = loadFixture("invalid/model-all-null-caps/model.yaml");
+    const expected = loadExpectedErrors(
+      "invalid/model-all-null-caps/expected-errors.json",
+    );
+    const errors = validateModel(doc, "model.yaml");
+
+    expect(errors.length).toBe(expected.length);
+    expect(errors).toEqual(
+      expected.map((expectation) => ({
+        file: "model.yaml",
+        field: expectation.field,
+        message: expectation.message,
+      })),
+    );
+  });
 });
 
 describe("validatePhases", () => {
@@ -155,6 +176,19 @@ describe("validatePhases", () => {
           error.field === "phases.1.id" && error.message.includes("sdd-apply"),
       ),
     ).toBe(true);
+  });
+
+  // T9.7 (slice 8 advisory): also check the "first declared at" index the
+  // duplicate-id message names, not only that the message mentions the id.
+  it("rejects a duplicate phase id, naming the first-declared index", () => {
+    const doc = loadFixture("invalid/phases-duplicate-id/phases.yaml");
+    const errors = validatePhases(doc, "phases.yaml");
+
+    const duplicateError = errors.find((error) => error.field === "phases.1.id");
+    expect(duplicateError).toBeDefined();
+    expect(duplicateError?.message).toBe(
+      'duplicate phase id "sdd-apply" (first declared at phases.0.id)',
+    );
   });
 });
 
