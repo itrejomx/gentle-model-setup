@@ -178,4 +178,69 @@ describe("canonical phases", () => {
     expect(findPhase(doc, "jd-judge-a").role).toBe("judge-a");
     expect(findPhase(doc, "jd-judge-b").role).toBe("judge-b");
   });
+
+  // T9.5 (slice 8 advisory): each id sits in its canonical group, iterating
+  // the same per-group id constants used to build CANONICAL_PHASE_IDS above,
+  // rather than only checking membership in the flat GROUPS enum.
+  describe("group membership", () => {
+    it.each(ORCHESTRATION_IDS)("%s belongs to group orchestration", (id) => {
+      const doc = loadPhases();
+      expect(findPhase(doc, id).group).toBe("orchestration");
+    });
+
+    it.each(SDD_IDS)("%s belongs to group sdd", (id) => {
+      const doc = loadPhases();
+      expect(findPhase(doc, id).group).toBe("sdd");
+    });
+
+    it.each(JUDGMENT_DAY_IDS)("%s belongs to group judgment-day", (id) => {
+      const doc = loadPhases();
+      expect(findPhase(doc, id).group).toBe("judgment-day");
+    });
+
+    it.each(REVIEW_IDS)("%s belongs to group review", (id) => {
+      const doc = loadPhases();
+      expect(findPhase(doc, id).group).toBe("review");
+    });
+
+    it.each(WORKER_IDS)("%s belongs to group workers", (id) => {
+      const doc = loadPhases();
+      expect(findPhase(doc, id).group).toBe("workers");
+    });
+  });
+
+  // T9.6 (slice 8 advisory): pin the judgment-call rows the header comment
+  // (data/phases/phases.yaml lines 14-25) documents as following the design
+  // spec's more detailed table rather than canonical-phases/spec.md's
+  // shorter, incomplete summary sentence.
+  it("jd-fix-agent is an implementer", () => {
+    const doc = loadPhases();
+    expect(findPhase(doc, "jd-fix-agent").role).toBe("implementer");
+  });
+
+  it("gentle-ai-worker is an implementer", () => {
+    const doc = loadPhases();
+    expect(findPhase(doc, "gentle-ai-worker").role).toBe("implementer");
+  });
+
+  it("gentle-ai-verify is a verifier", () => {
+    const doc = loadPhases();
+    expect(findPhase(doc, "gentle-ai-verify").role).toBe("verifier");
+  });
+
+  it("sdd-remediate runs in a loop, by analogy with sdd-apply", () => {
+    const doc = loadPhases();
+    const phase = findPhase(doc, "sdd-remediate");
+    expect(phase.callPattern).toBe("loop");
+    expect(phase.role).toBe("implementer");
+  });
+
+  // T9.6: every weights map sums to 1.0 exactly, per the phases.yaml header
+  // ("every weights map sums to 1.0"), tightening the earlier ">0" check.
+  it.each(CANONICAL_PHASE_IDS)("%s's weights sum to 1.0", (id) => {
+    const doc = loadPhases();
+    const phase = findPhase(doc, id);
+    const sum = Object.values(phase.weights).reduce((total, value) => total + value, 0);
+    expect(sum).toBeCloseTo(1.0, 9);
+  });
 });
