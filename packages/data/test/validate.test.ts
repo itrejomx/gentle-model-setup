@@ -121,6 +121,21 @@ describe("validatePhases", () => {
       errors.some((error) => error.field === "phases.0.weights.cheap"),
     ).toBe(true);
   });
+
+  // The JSON Schema has no way to reject a duplicate array entry, so phase-id
+  // uniqueness is a code check (mirrors `checkCurrentRequiresCap` in shape).
+  it("rejects a duplicate phase id, naming the id", () => {
+    const doc = loadFixture("invalid/phases-duplicate-id/phases.yaml");
+    const errors = validatePhases(doc, "phases.yaml");
+
+    expect(errors.every((error) => error.file === "phases.yaml")).toBe(true);
+    expect(
+      errors.some(
+        (error) =>
+          error.field === "phases.1.id" && error.message.includes("sdd-apply"),
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("validateRuntime", () => {
