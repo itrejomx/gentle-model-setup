@@ -36,7 +36,7 @@ Out: engine (#3), other subscription catalogs (#4-#7), site, checker, deploy.
 - Test runner: Vitest through pnpm. Focused run:
   `pnpm --filter @gentle-ai/profile-data exec vitest run <pattern>`. Full: `pnpm test`.
 - Delivery: stacked-to-main PR chain, one PR per slice, base = previous slice branch.
-  Chain so far: #17 <- #18 <- #19 <- #20 <- #21 <- #22 <- #23 <- #24 <- #25 <- #26.
+  Chain so far: #17 <- #18 <- #19 <- #20 <- #21 <- #22 <- #23 <- #24 <- #25 <- #26 <- #27.
 - Receipt-driven development is on globally; native review runs per slice candidate with
   per-candidate consent (`--base-ref <previous branch> --committed-only`).
 - Conventional commits, no AI attribution trailers. Commits split as test / data or code / docs.
@@ -87,9 +87,19 @@ Split on 2026-09-17: the original slice 10 absorbed the reopened T8.5, the slice
 - [x] T10.11 (slice 9 advisory) Make the provenance comments in `data/runtimes/claude-code.yaml` and `packages/data/test/runtime-mappings.test.ts` agree about the older counts (design spec said Claude Code 18 / OpenCode 20; live counts are 19 / 21).
 - [x] T10.12 Verify: focused `bundle`, `canonical`, `runtime-mappings`, and `catalog` runs; `pnpm -r typecheck`; `pnpm test`.
 
-### Slice 11 — CLIs, CI workflow, error surfaces
+### Slice 11 — bundle hardening and loadData (branch `feat/2-bundle-hardening`)
 
-- [ ] T10.13 (slice 10 gap) Implement the design's `loadData` / `validateData`: assemble a real `DataSet` from `data/` on disk (today only tests hand-build one), so the CLIs can call `buildBundle` on the committed data. RED-first integration test: `loadData` over the repository's `data/` yields 1 subscription, 29 models, 27 phases, 4 runtimes, and `buildBundle` accepts it.
+Bundle hardening from the slice 10 review comes before the CLIs, which expose exactly these paths. Split 2026-09-18 from the CLI/CI work to keep each PR near the review budget.
+
+- [x] T11.1 (slice 10 advisory) Locale-independent canonical order: replace `localeCompare` in `canonical.ts` with a code-unit comparison; extend the property test generators to mixed case, punctuation, and non-ASCII ids so the old comparison would have failed.
+- [x] T11.2 (slice 10 advisory) Total order for collections: tie-break tied sort keys (overrides with the same tier/phase/model, duplicated or missing ids) deterministically, e.g. by the item's canonical JSON; property test with tied keys proves input order no longer changes the hash. Limit collection reordering to depth 0 as documented, and never throw on a `null` item.
+- [x] T11.3 (slice 10 advisory) A model whose `subscription` does not resolve is an integrity error, never a degraded bundle; RED-first fixture. Also assert or branch on `budgetClass.derivedFrom` instead of always deriving from `requestsPer5h`.
+- [x] T11.4 (slice 10 advisory) `loadBundle` validates the file shape and raises typed bundle errors for malformed JSON, missing `payload`, and missing `hash`, distinct from `BundleHashMismatchError`; RED-first tests for each.
+- [x] T11.5 (slice 10 advisory) A test proves `buildBundle` throws `DataValidationError` on a failing `DataSet` (non-empty runtimes with a dangling phase id); broaden the "any scalar changes the hash" property test to a random leaf including sort-key fields.
+
+- [x] T10.13 (slice 10 gap) Implement the design's `loadData` / `validateData`: assemble a real `DataSet` from `data/` on disk (today only tests hand-build one), so the CLIs can call `buildBundle` on the committed data. RED-first integration test: `loadData` over the repository's `data/` yields 1 subscription, 29 models, 27 phases, 4 runtimes, and `buildBundle` accepts it.
+### Slice 12 — CLIs, CI workflow, error surfaces
+
 - [ ] T10.5 RED (threat matrix, CLI argument composition): a path argument containing a space and a `;` is validated as that literal directory or exits 2, never executed; assert no `child_process` import in `packages/data`.
 - [ ] T10.6 GREEN: create `packages/data/src/cli/validate.ts` (one positional path arg, no shell interpolation, exit 0/1/2 per design) and `packages/data/src/cli/build.ts`; wire root `package.json` scripts.
 - [ ] T10.7 Create `.github/workflows/ci.yml` (threat matrix, CI workflow trust): `on: pull_request` only, `permissions: { contents: read }`, `actions/checkout@v4`, `pnpm/action-setup@v4`, `actions/setup-node@v4`, `pnpm install --frozen-lockfile`, `pnpm validate`, `pnpm test`, `pnpm build`.
@@ -125,6 +135,15 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 - 2026-09-17: slice 9 implemented (T9.1-T9.7), commits `54dd1d3..HEAD` of `feat/2-runtime-mappings`. Observed RED: focused runtime-mappings run 26/26 failed (`YamlLoadError ENOENT ... data/runtimes`). T9.5-T9.7 pin already-correct behavior, so each new assertion was proven by a reverted local mutation (wrong group, wrong role, broken weight sum, extra fixture field, shifted duplicate index): every mutation made the new assertion fail. The parent's cross-check against the live `opencode.json` found the writer had dropped `gentle-orchestrator`; after the maintainer's decision a second RED was observed (2 failed: "expected 20 to be 21", "expected [] to deeply equal ['opencode']") and then GREEN. Final: runtime-mappings 27/27; `pnpm -r typecheck` exit 0; `pnpm test` all passing (run by the parent); no private strings in `data/runtimes/`. Native review and PR: pending.
 - 2026-09-17: slice 9 native review approved and acknowledged (lineage `review-f556e8866254e282`, reliability lens); five informational findings, all about `runtime-mappings.test.ts` checking hand-copied lists instead of the data files; folded as T10.10 and T10.11. Pushed; PR #26 opened against `feat/2-canonical-phases`. Slice 10 split into slices 10 and 11.
 - 2026-09-17: slice 10 implemented (T10.1-T10.4, T10.2b, T10.10-T10.12), commits `edf44e4..292ad8d`. Observed RED: `canonical.property.test.ts` and `bundle-cross-file-integrity.test.ts` failed on missing modules before the code existed; `bundle.integration.test.ts` failed both assertions against a throwing `loadBundle` stub; T10.2b failed against a deliberately wrong `buildBundle` that multiplied the cap (`expected 'volume' to be 'workhorse'`), reverted before commit; the three negative integrity fixtures failed against a neutered `checkCrossFileIntegrity`. Assertions with no natural RED (agentMap uniqueness, runtime directory listing) were proven by reverted mutations. Observed GREEN: canonical 3/3; bundle 7/7; runtime-mappings 25/25; catalog 268/268; `pnpm -r typecheck` exit 0; `pnpm test` 515/515 (re-run by the parent); no `child_process` in `packages/data/src`. Diff vs slice 9: 13 files, 905 insertions, 150 deletions; over the ~400-line guide after one slicing pass already moved the CLIs and CI to slice 11; not split further. Native review and PR: pending.
+- 2026-09-18: slice 10 native review approved and acknowledged (lineage `review-4384fb190d896943`, reliability lens); eight informational findings, two verified by the parent against the source (locale-dependent sort, dangling subscription fallback); folded as T11.1-T11.5 ahead of the CLIs. Pushed; PR #27 opened against `feat/2-runtime-mappings`, labeled `size:exception`.
+- 2026-09-18: slice 11 implemented (T11.1-T11.5, T10.13), commits `b25d8e1..bed996a`. Observed RED: 5 of 9 new canonical property tests failed against the old `localeCompare` order, nested reordering, null items, and tied keys; 3 dangling-subscription/derivedFrom assertions failed (the dangling case surfaced the real pre-fix bug: an untyped `Error("thresholds must end with a null max")`); 5 of 6 `loadBundle` shape tests failed with raw `SyntaxError` or a misleading `BundleHashMismatchError`; `load-data.test.ts` failed with `loadData is not a function`. Assertions with no natural RED (broadened "any scalar" property; the hash-mismatch regression case) were proven by reverted mutations. Observed GREEN: canonical 9/9; bundle 19/19; load-data 5/5; `pnpm -r typecheck` exit 0; `pnpm test` 538/538 (re-run by the parent); no `.localeCompare(` call and no `child_process` in `packages/data/src`. Diff vs slice 10: 11 files, 1010 insertions, 45 deletions; each fix sits with its tests, not split. Native review and PR: pending.
+- 2026-09-18: native review for slice 11 declined by the maintainer for this candidate (lineage `review-ced255014c2a0e9d`, `consent: declined_this_candidate`; RDD stays on). Branch `feat/2-bundle-hardening` is committed locally and NOT pushed; no PR yet. Session paused here for a restart.
+
+## Rationale for accepted judgment calls (slice 11)
+
+- New error types `BundleParseError` and `BundleShapeError` (the design names only `DataError`, `DataValidationError`, `BundleHashMismatchError`). Unsupported `budgetClass.derivedFrom` and dangling `model.subscription` are integrity errors aggregated into `DataValidationError`, like the other cross-file checks.
+- `loadData` / `validateData` are `async` per the design signatures but use synchronous `fs` internally, matching `readYamlFile`; a missing `data/overrides/` directory means zero overrides, consistent with the bundle spec ("Overrides collection is empty in this change").
+- Testing gotcha recorded: under Vitest, importing a not-yet-defined named export yields `undefined` and `expect(fn).toThrow(undefined)` passes vacuously; scaffold the error class first so RED is real.
 
 ## Rationale for accepted judgment calls (slice 10)
 
@@ -152,4 +171,4 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 
 ## Next step
 
-Slice 10 delivery boundary: native review, then push and PR against `feat/2-runtime-mappings` on maintainer go-ahead. Then slice 11, T10.13.
+On resume: ask the maintainer whether to push `feat/2-bundle-hardening` and open PR #28 against `feat/2-bundle-hash` (review was declined for this candidate; `size:exception` recommended, 1010/45). Then slice 12, T10.5, on a branch from `feat/2-bundle-hardening`.
