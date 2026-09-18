@@ -1,0 +1,6 @@
+id: claude-code
+displayName: Claude Code
+agentMap:
+  sdd-propose: 42
+prefixMap:
+  opencode-go: opencode-go

@@ -1,0 +1,23 @@
+phases:
+  - id: sdd-apply
+    group: sdd
+    callPattern: loop
+    role: implementer
+    weights:
+      oneShotReasoning: 0.1
+      sustainedReasoning: 0.25
+      codingTools: 0.4
+      longContext: 0.15
+      multimodal: 0
+      cheap: 0.1
+  - id: sdd-verify
+    group: sdd
+    callPattern: one-shot
+    role: verifier
+    weights:
+      oneShotReasoning: 0.2
+      sustainedReasoning: 0.2
+      codingTools: 0.2
+      longContext: 0.2
+      multimodal: 0.1
+      cheap: 0.1

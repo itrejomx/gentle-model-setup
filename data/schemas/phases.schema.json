@@ -1,0 +1,78 @@
+{
+  "$id": "https://itrejomx.github.io/gentle-model-setup/schemas/phases.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Phases",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["phases"],
+  "properties": {
+    "phases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "group", "callPattern", "role", "weights"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9.\\-]*$"
+          },
+          "group": {
+            "enum": ["orchestration", "sdd", "judgment-day", "review", "workers"]
+          },
+          "callPattern": {
+            "enum": ["one-shot", "loop"]
+          },
+          "role": {
+            "enum": ["implementer", "verifier", "judge-a", "judge-b", "neutral"]
+          },
+          "weights": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "oneShotReasoning",
+              "sustainedReasoning",
+              "codingTools",
+              "longContext",
+              "multimodal",
+              "cheap"
+            ],
+            "properties": {
+              "oneShotReasoning": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "sustainedReasoning": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "codingTools": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "longContext": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "multimodal": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "cheap": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

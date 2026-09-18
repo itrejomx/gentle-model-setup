@@ -1,0 +1,11 @@
+phases:
+  - id: jd-judge-b
+    group: judgment-day
+    callPattern: one-shot
+    role: judge-b
+    weights:
+      oneShotReasoning: 0.2
+      sustainedReasoning: 0.2
+      codingTools: 0.2
+      longContext: 0.2
+      multimodal: 0.2

@@ -1,0 +1,53 @@
+{
+  "$id": "https://itrejomx.github.io/gentle-model-setup/schemas/override.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Override",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tier",
+    "phase",
+    "requires",
+    "model",
+    "effort",
+    "reason",
+    "author",
+    "pr"
+  ],
+  "properties": {
+    "tier": {
+      "enum": ["HIGH", "BALANCED", "LEAN"]
+    },
+    "phase": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requires": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effort": {
+      "enum": ["low", "medium", "high"]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pr": {
+      "type": "string",
+      "format": "uri"
+    }
+  }
+}

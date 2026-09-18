@@ -95,9 +95,84 @@ Class derivation), on branch `feat/2-schemas-loader-core` (stacked on
 
 None beyond the deviations above.
 
-### Remaining Tasks
+### Remaining Tasks (as of Work Unit 2)
 
 - [ ] Phase 3: Phases/Runtime/Override Schemas (Work Unit 3, PR 3) — tasks 3.1–3.4
+- [ ] Phase 4: Go Subscription + Source Fixtures (Work Unit 4, PR 4) — tasks 4.1–4.4
+- [ ] Phase 5: Catalog — moonshot/zhipu/xai/openai (Work Unit 5, PR 5) — tasks 5.1–5.4
+- [ ] Phase 6: Catalog — alibaba/deepseek (Work Unit 6, PR 6) — tasks 6.1–6.4
+- [ ] Phase 7: Catalog — minimax/xiaomi/tencent/meituan/meta (Work Unit 7, PR 7) — tasks 7.1–7.4
+- [ ] Phase 8: Canonical Phases (Work Unit 8, PR 8) — tasks 8.1–8.3
+- [ ] Phase 9: Runtime Mappings (Work Unit 9, PR 9) — tasks 9.1–9.4
+- [ ] Phase 10: Bundle + CLI + CI (Work Unit 10, PR 10) — tasks 10.1–10.8
+
+### Workload / PR Boundary (Work Unit 2)
+
+- Mode: stacked PR slice (`stacked-to-main`, per tasks.md Review Workload Forecast)
+- Current work unit: Work Unit 2 (Phase 2), targeting branch `feat/2-workspace-scaffold` (PR #18); this branch is `feat/2-schemas-loader-core`
+- Boundary: starts from the Work Unit 1 scaffold (VERSION smoke test only); ends with subscription/model schemas, the full loader core (parse, containment, validate, Strength-3 check), and `deriveBudgetClass`, all covered by passing tests and green typecheck
+- Estimated review budget impact: **over budget** — 1235 authored lines vs. the 400-line default and design's ~380 estimate for this slice; see Deviation 5 for the breakdown and `size:exception` recommendation
+
+## Work Unit 3 / Phase 3 (PR 3) — Complete
+
+Implemented the phases, runtime, and override JSON Schemas plus their
+validators, on branch `feat/2-phases-runtime-override-schemas` (stacked on
+`feat/2-schemas-loader-core`, PR #19), committed as:
+
+- `2689cc6 feat(data): add phases, runtime, and override JSON Schemas`
+- `92fcd79 feat(data): validators for phases, runtimes, and overrides`
+
+### Files Changed
+
+| File | Action | What Was Done |
+|------|--------|---------------|
+| `data/schemas/phases.schema.json` | Created | 2020-12 schema: top-level `phases` array (`minItems: 1`); each entry requires `id`, `group` (enum `orchestration\|sdd\|judgment-day\|review\|workers`), `callPattern` (enum `one-shot\|loop`), `role` (enum `implementer\|verifier\|judge-a\|judge-b\|neutral`), `weights` (object, all six strength axes required, each `number` `0..1`) |
+| `data/schemas/runtime.schema.json` | Created | 2020-12 schema: `id`, `displayName`, `agentMap` and `prefixMap` both `type: object`, `minProperties: 1`, `additionalProperties: { type: string }` |
+| `data/schemas/override.schema.json` | Created | 2020-12 schema: `tier` (enum `HIGH\|BALANCED\|LEAN`), `phase`, `requires` (array, `minItems: 1`, string items), `model`, `effort` (enum `low\|medium\|high`), `reason`, `author`, `pr` (`format: uri`) |
+| `packages/data/src/validate.ts` | Modified | Added `validatePhases`, `validateRuntime`, `validateOverride` (compile + `toDataErrors`, same pattern as `validateSubscription`); extracted the shared compile-then-report logic from all four schema-only validators into `validateAgainstSchema(validateFn, doc, file)` (REFACTOR step, ran after GREEN, tests stayed green throughout) |
+| `packages/data/src/index.ts` | Modified | Exports `validatePhases`, `validateRuntime`, `validateOverride` |
+| `packages/data/test/validate.test.ts` | Modified | Added `describe` blocks for `validatePhases`, `validateRuntime`, `validateOverride`: one valid-accepts case and one invalid-rejects-naming-field case each |
+| `packages/data/test/fixtures/valid/phases/phases.yaml` | Created | Two valid phase entries (`sdd-apply` loop/implementer, `sdd-verify` one-shot/verifier) |
+| `packages/data/test/fixtures/invalid/phases-missing-weights-axis/phases.yaml` | Created | `jd-judge-b` entry with `weights` missing the `cheap` axis |
+| `packages/data/test/fixtures/valid/runtime/runtime.yaml` | Created | Valid `claude-code` runtime mapping (`agentMap`, `prefixMap` each non-empty) |
+| `packages/data/test/fixtures/invalid/runtime-agentmap-non-string/runtime.yaml` | Created | `agentMap.sdd-propose: 42` (non-string value) |
+| `packages/data/test/fixtures/valid/override/override.yaml` | Created | Valid override (`tier: BALANCED`, `requires: [opencode-go]`, etc.) |
+| `packages/data/test/fixtures/invalid/override-bad-tier/override.yaml` | Created | `tier: EXTREME` (outside the enum) |
+
+### TDD Cycle Evidence
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 3.1–3.3 (phases) | `test/validate.test.ts` | Unit | ✅ 12/12 (pre-existing validate.test.ts cases) | ✅ Written — `TypeError: validatePhases is not a function` | ✅ Passed — 12/12 after implementing `validatePhases` + schema | ✅ 2 cases (valid collection, missing-axis reject naming `phases.0.weights.cheap`) | ✅ Extracted `validateAgainstSchema` shared helper |
+| 3.1–3.3 (runtime) | `test/validate.test.ts` | Unit | ✅ (same file, same baseline) | ✅ Written — `TypeError: validateRuntime is not a function` | ✅ Passed — after implementing `validateRuntime` + schema | ✅ 2 cases (valid mapping, non-string `agentMap` value naming `agentMap.sdd-propose`) | ✅ Same extraction |
+| 3.1–3.3 (override) | `test/validate.test.ts` | Unit | ✅ (same file, same baseline) | ✅ Written — `TypeError: validateOverride is not a function` | ✅ Passed — after implementing `validateOverride` + schema | ✅ 2 cases (valid override, `tier: EXTREME` reject naming `tier`) | ✅ Same extraction |
+
+### Test Summary
+
+- **Total tests written this unit**: 6 (2 `describe` cases × 3 validators)
+- **Total tests passing (package)**: 26 (20 carried over from Work Units 1–2, plus 6 new)
+- **Layers used**: Unit (6 new; fixture-driven, same style as existing `validateSubscription`/`validateModel` tests)
+- **Approval tests** (refactoring): None — `validateAgainstSchema` extraction is a pure internal refactor with identical external behavior, verified by the full existing + new test suite staying green before and after
+- **Pure functions created**: `validateAgainstSchema` (internal helper, no I/O), `validatePhases`, `validateRuntime`, `validateOverride` (each pure: parsed doc in, `DataError[]` out)
+
+### Work Unit Evidence
+
+| Evidence | Value |
+|---|---|
+| Focused test command and exact result | `pnpm --filter @gentle-ai/profile-data exec vitest run validate` → 1 file, 12 tests passed |
+| Runtime harness command/scenario and exact result | N/A — unit tests call the validator functions directly against fixtures; no network, process, or filesystem-containment boundary in this slice (schema-only validation, no loader I/O change) |
+| Rollback boundary | `git revert 92fcd79 2689cc6` (in that order) removes the three schema files, the three validator functions, their `index.ts` exports, the `validateAgainstSchema` refactor, and the new test file section + fixtures, restoring exactly the Work Unit 2 state; nothing downstream (Phases 4–10) exists yet to depend on these schemas |
+
+### Deviations from Design
+
+None — implementation matches design.md's `Interfaces / Contracts` → `Schemas` table (required fields, enums, `agentMap`/`prefixMap` shape) and the Loader API's `validatePhases`/`validateRuntime`/`validateOverride` signatures exactly. `phases.schema.json` intentionally does not hard-code the 27-row count via `minItems`/`maxItems` — the design explicitly assigns that check to a test in Work Unit 8, not the schema.
+
+### Issues Found
+
+None.
+
+### Remaining Tasks
+
 - [ ] Phase 4: Go Subscription + Source Fixtures (Work Unit 4, PR 4) — tasks 4.1–4.4
 - [ ] Phase 5: Catalog — moonshot/zhipu/xai/openai (Work Unit 5, PR 5) — tasks 5.1–5.4
 - [ ] Phase 6: Catalog — alibaba/deepseek (Work Unit 6, PR 6) — tasks 6.1–6.4
@@ -109,10 +184,10 @@ None beyond the deviations above.
 ### Workload / PR Boundary
 
 - Mode: stacked PR slice (`stacked-to-main`, per tasks.md Review Workload Forecast)
-- Current work unit: Work Unit 2 (Phase 2), targeting branch `feat/2-workspace-scaffold` (PR #18); this branch is `feat/2-schemas-loader-core`
-- Boundary: starts from the Work Unit 1 scaffold (VERSION smoke test only); ends with subscription/model schemas, the full loader core (parse, containment, validate, Strength-3 check), and `deriveBudgetClass`, all covered by passing tests and green typecheck
-- Estimated review budget impact: **over budget** — 1235 authored lines vs. the 400-line default and design's ~380 estimate for this slice; see Deviation 5 for the breakdown and `size:exception` recommendation
+- Current work unit: Work Unit 3 (Phase 3), branch `feat/2-phases-runtime-override-schemas` (stacked on `feat/2-schemas-loader-core`, PR #19)
+- Boundary: starts from the Work Unit 2 state (subscription/model schemas, loader core, Budget Class); ends with the phases/runtime/override schemas and their three validators, all covered by passing tests and green typecheck
+- Estimated review budget impact: within budget — `git diff --stat feat/2-schemas-loader-core..HEAD` (lockfile excluded) = 330 insertions + 8 deletions = 338 authored lines, under the 400-line default
 
 ### Status
 
-15/50 tasks complete (1.1–1.5, 2.1–2.10). Ready for verify on Work Unit 2, or for `sdd-apply` to continue with Work Unit 3.
+19/50 tasks complete (1.1–1.5, 2.1–2.10, 3.1–3.4). Ready for verify on Work Unit 3, or for `sdd-apply` to continue with Work Unit 4.

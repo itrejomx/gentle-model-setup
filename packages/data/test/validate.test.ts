@@ -3,7 +3,13 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
-import { validateModel, validateSubscription } from "../src/validate.js";
+import {
+  validateModel,
+  validateOverride,
+  validatePhases,
+  validateRuntime,
+  validateSubscription,
+} from "../src/validate.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = join(here, "fixtures");
@@ -95,5 +101,60 @@ describe("validateModel", () => {
     const errors = validateModel(doc, "model.yaml");
 
     expect(errors.some((error) => error.field === "id")).toBe(true);
+  });
+});
+
+describe("validatePhases", () => {
+  it("accepts a valid phases collection", () => {
+    const doc = loadFixture("valid/phases/phases.yaml");
+    expect(validatePhases(doc, "phases.yaml")).toEqual([]);
+  });
+
+  it("rejects a phase entry missing a weights axis, naming the field", () => {
+    const doc = loadFixture(
+      "invalid/phases-missing-weights-axis/phases.yaml",
+    );
+    const errors = validatePhases(doc, "phases.yaml");
+
+    expect(errors.every((error) => error.file === "phases.yaml")).toBe(true);
+    expect(
+      errors.some((error) => error.field === "phases.0.weights.cheap"),
+    ).toBe(true);
+  });
+});
+
+describe("validateRuntime", () => {
+  it("accepts a valid runtime mapping", () => {
+    const doc = loadFixture("valid/runtime/runtime.yaml");
+    expect(validateRuntime(doc, "runtime.yaml")).toEqual([]);
+  });
+
+  it("rejects a non-string agentMap value, naming the field", () => {
+    const doc = loadFixture(
+      "invalid/runtime-agentmap-non-string/runtime.yaml",
+    );
+    const errors = validateRuntime(doc, "runtime.yaml");
+
+    expect(errors.every((error) => error.file === "runtime.yaml")).toBe(true);
+    expect(
+      errors.some((error) => error.field === "agentMap.sdd-propose"),
+    ).toBe(true);
+  });
+});
+
+describe("validateOverride", () => {
+  it("accepts a valid override", () => {
+    const doc = loadFixture("valid/override/override.yaml");
+    expect(validateOverride(doc, "override.yaml")).toEqual([]);
+  });
+
+  it("rejects a tier outside the enum, naming the field", () => {
+    const doc = loadFixture("invalid/override-bad-tier/override.yaml");
+    const errors = validateOverride(doc, "override.yaml");
+
+    expect(errors.every((error) => error.file === "override.yaml")).toBe(
+      true,
+    );
+    expect(errors.some((error) => error.field === "tier")).toBe(true);
   });
 });
