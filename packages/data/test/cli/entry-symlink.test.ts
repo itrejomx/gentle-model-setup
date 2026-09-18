@@ -5,13 +5,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
-// This file is the ONLY place under `packages/data` allowed to import
-// `node:child_process` (AGENTS.md: no `child_process` under
-// `packages/data/src`; `no-child-process.test.ts` scans `src` only, not
-// `test`). It spawns the CLI as a real process because the bug it
-// reproduces (issue #33) lives in the comparison between `process.argv[1]`
-// and `import.meta.url`, which an in-process call to `runValidateCli` or
-// `runBuildCli` never exercises.
+// AGENTS.md bans `child_process` across `packages/data`; the enforcement
+// mechanism (`no-child-process.test.ts`) scans only `src`, so this file --
+// under `test/` -- is the one place that may import it. It spawns the CLI
+// as a real process because the bug it reproduces (issue #33) lives in the
+// comparison between `process.argv[1]` and `import.meta.url`, which an
+// in-process call to `runValidateCli` or `runBuildCli` never exercises.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const packageDir = join(here, "../..");
