@@ -21,7 +21,7 @@ Slices 1-6 ran under SDD as change `scaffold-data-contract-go-catalog`. On 2026-
 maintainer moved slices 7-10 to Organic Driven Development. The SDD change is frozen:
 its `proposal.md`, `specs/`, `design.md`, and `tasks.md` are read-only reference for
 requirements and design decisions, and its `tasks.md` / `apply-progress.md` are no longer
-updated. Progress lives in this document. `sdd-archive` runs once, after slice 10, so
+updated. (Archived 2026-09-18: the change now lives under `openspec/changes/archive/2026-09-18-scaffold-data-contract-go-catalog/`.) Progress lives in this document. `sdd-archive` runs once, after slice 10, so
 `openspec/specs/` never documents a capability that does not exist yet.
 
 ## Scope
@@ -111,7 +111,7 @@ Bundle hardening from the slice 10 review comes before the CLIs, which expose ex
 - [x] TC.1 Docs fix: `docs/superpowers/specs/2026-09-14-model-profile-site-design.md` line 87 thresholds vs the proposal.
 - [x] TC.3 Before archiving, correct the role summary sentence in the frozen `specs/canonical-phases/spec.md` (lines 49-52): it omits `jd-fix-agent: implementer`, `gentle-ai-verify: verifier`, and `gentle-ai-worker: implementer`, which the design spec table it defers to assigns.
 - [x] TC.4 Before archiving, correct the OpenCode count (20 -> 21, with `gentle-orchestrator`) in the frozen SDD spec, design, and tasks, and in `docs/superpowers/specs/2026-09-14-model-profile-site-design.md` section 3.2.
-- [ ] TC.2 Run `sdd-archive` for `scaffold-data-contract-go-catalog` with final-state facts (requires explicit maintainer go-ahead). Maintainer decision 2026-09-18: run it after the PR chain #17-#30 is merged, so `openspec/specs/` only documents capabilities that are on `main`.
+- [x] TC.2 Run `sdd-archive` for `scaffold-data-contract-go-catalog` with final-state facts (requires explicit maintainer go-ahead). Maintainer decision 2026-09-18: run it after the PR chain #17-#30 is merged, so `openspec/specs/` only documents capabilities that are on `main`.
 
 ## Acceptance criteria
 
@@ -145,6 +145,8 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 - 2026-09-18: close-out docs on branch `docs/2-close-out` (route: delegated direct, one writer; one leftover fix inline by the parent). TC.1 `e1b8e05`: design doc line 87 now reads `sniper ≤199, semi 200–499, workhorse 500–5000, volume >5000`; the proposal (`<200`, `<500`, `≤5000`, `>5000`) and `data/subscriptions/opencode-go.yaml` (max 199 / 499 / 5000 / null) already agreed, the design doc carried an unsupported sniper floor of 100 and claimed 5000 for two classes. TC.3 `f103914`: role summary sentence completed, each role checked against `data/phases/phases.yaml`. TC.4 `d8beb81` and `22442e4`: OpenCode 20 -> 21 in the frozen spec, design, tasks, and proposal, and in the design doc section 3.2; the same design doc line also said Claude Code 18, corrected to 19 (live `agentMap` count; the proposal already recorded the amendment from 18). Live counts re-verified: Pi 24, OpenCode 21, Claude Code 19, Codex 17. `apply-progress.md` and `exploration.md` history left as written. `pnpm test` 559/559.
 - 2026-09-18: close-out docs native review (assessed `medium`: `design.md` classed as an executable change) granted by the maintainer, reliability lens, approved and acknowledged (lineage `review-08245139e52d01c6`, authority burned). One informational finding, `R3-new-role-clauses-lack-scenario`: the amended role sentence has no spec scenario. The parent checked its premise: the three roles ARE pinned by executable assertions (`packages/data/test/phases.test.ts:216-228`, added in T9.6), so only the missing scenario in the frozen spec stands; not acted on.
 - 2026-09-18: close-out docs pushed; PR #30 opened against `feat/2-cli-ci-error-surfaces` (7 files, 19 insertions, 16 deletions); CI job `validate-and-test` passed (run 35402146447).
+- 2026-09-18: on the maintainer's explicit request the chain #17-#30 was merged into `main`, bottom-up, with merge commits (`518f201` #17 ... `0782aff` #30). Each child was retargeted to `main` and its diff checked unchanged before merging; branches were not deleted. Verified on `main`: tree identical to the chain head; `pnpm -r typecheck` clean; `pnpm validate` exit 0; `pnpm test` 559/559; `pnpm build` hash `be3e880d...` unchanged. Issue #2 stays open (the PRs used `Refs #2`).
+- 2026-09-18: TC.2 done on branch `docs/2-sdd-archive` (SDD preflight: automatic, hybrid store, auto-chain), commit `76ad41b`: the 8 specs now live in `openspec/specs/` (byte-identical to the archived deltas), the change moved to `openspec/changes/archive/2026-09-18-scaffold-data-contract-go-catalog/` with an archive report that records 31 tasks closed under SDD, 19 delivered under ODD with PR evidence, and the open follow-ups as open; Engram mirror `sdd/scaffold-data-contract-go-catalog/archive-report` (#823). Parent gate: the archive agent had also committed the untracked `.gga`; the parent removed it from the unpushed commit (tracking `.gga` is still the maintainer's call). Push and PR: pending.
 
 ## Rationale for accepted judgment calls (slice 12)
 
@@ -186,4 +188,4 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 
 ## Next step
 
-Maintainer merges the chain, starting at #17. After the merge: TC.2 (`sdd-archive`). Still open for the maintainer: which slice 12 review findings become a follow-up slice or issue; whether `.gga` is tracked.
+On the maintainer's go-ahead push `docs/2-sdd-archive` and open its PR against `main`. Still open for the maintainer: closing issue #2; which slice 12 review findings become a follow-up slice or issue; whether `.gga` is tracked.
