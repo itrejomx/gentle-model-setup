@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { checkCrossFileIntegrity } from "../src/integrity.js";
-import type { DataSet, PhaseRecord, RuntimeRecord, SubscriptionRecord } from "../src/types.js";
+import type {
+  DataSet,
+  ModelRecord,
+  PhaseRecord,
+  RuntimeRecord,
+  SubscriptionRecord,
+} from "../src/types.js";
 
 /**
  * Cross-file checks no single-file validator can express, because they
@@ -111,5 +117,118 @@ describe("checkCrossFileIntegrity", () => {
       runtimes: [runtime],
     };
     expect(checkCrossFileIntegrity(dataSet)).toEqual([]);
+  });
+});
+
+/**
+ * A model whose `subscription` does not resolve is an integrity error, not
+ * a degraded bundle (T11.3, slice 10 review): `injectBudgetClasses`
+ * previously fell back to an empty threshold list for a dangling
+ * subscription, which either silently derived `budgetClass: null` (when
+ * `requestsPer5h` was itself `null`) or threw an untyped `Error` from
+ * `deriveBudgetClass` — never the aggregated, typed `DataValidationError`
+ * every other integrity failure produces.
+ */
+function fixtureModel(overrides: Partial<ModelRecord> = {}): ModelRecord {
+  return {
+    id: "fixture-model",
+    subscription: "fixture-sub",
+    displayName: "Fixture Model",
+    lab: "moonshot",
+    status: "current",
+    strengths: {
+      oneShotReasoning: 1,
+      sustainedReasoning: 1,
+      codingTools: 1,
+      longContext: 1,
+      multimodal: 0,
+      cheap: 1,
+    },
+    privacy: { trainsOnData: false, logRetentionDays: 0 },
+    effortVariants: ["medium"],
+    plans: {
+      go: {
+        requestsPer5h: 1350,
+        requestsPerWeek: 6500,
+        requestsPerMonth: 26000,
+        monthlyUsdBucket: 10,
+        source: "https://example.com/catalog",
+        verifiedAt: "2026-09-18",
+      },
+    },
+    ...overrides,
+  };
+}
+
+describe("checkCrossFileIntegrity: dangling model subscription (T11.3)", () => {
+  it("accepts a model whose subscription resolves to a declared subscription", () => {
+    const dataSet: DataSet = {
+      subscriptions: SUBSCRIPTIONS,
+      models: [fixtureModel({ subscription: "fixture-sub" })],
+      phases: PHASES,
+      overrides: [],
+      runtimes: [],
+    };
+    expect(checkCrossFileIntegrity(dataSet)).toEqual([]);
+  });
+
+  it("rejects a model whose subscription does not resolve to any declared subscription", () => {
+    const dataSet: DataSet = {
+      subscriptions: SUBSCRIPTIONS,
+      models: [fixtureModel({ subscription: "no-such-subscription" })],
+      phases: PHASES,
+      overrides: [],
+      runtimes: [],
+    };
+    const errors = checkCrossFileIntegrity(dataSet);
+    expect(errors).toContainEqual(
+      expect.objectContaining({
+        file: "data/models/no-such-subscription/fixture-model.yaml",
+        field: "subscription",
+      }),
+    );
+  });
+});
+
+/**
+ * `budgetClass.derivedFrom` is `requestsPer5h | pricePerMTok` per the
+ * schema, but only `requestsPer5h` derivation is implemented
+ * (`deriveBudgetClass` and `injectBudgetClasses` both only ever read
+ * `requestsPer5h`). A subscription declaring `pricePerMTok` must fail
+ * loudly instead of silently deriving every model's Budget Class from the
+ * wrong metric (T11.3).
+ */
+describe("checkCrossFileIntegrity: unsupported budgetClass.derivedFrom (T11.3)", () => {
+  it("accepts a subscription declaring the supported requestsPer5h derivation", () => {
+    const dataSet: DataSet = {
+      subscriptions: SUBSCRIPTIONS,
+      models: [],
+      phases: PHASES,
+      overrides: [],
+      runtimes: [],
+    };
+    expect(checkCrossFileIntegrity(dataSet)).toEqual([]);
+  });
+
+  it("rejects a subscription declaring an unimplemented budgetClass.derivedFrom", () => {
+    const unsupportedSubscription: SubscriptionRecord = {
+      ...SUBSCRIPTIONS[0]!,
+      id: "unsupported-sub",
+      budgetClass: { derivedFrom: "pricePerMTok", thresholds: [{ class: "volume", max: null }] },
+    };
+    const dataSet: DataSet = {
+      subscriptions: [unsupportedSubscription],
+      models: [],
+      phases: PHASES,
+      overrides: [],
+      runtimes: [],
+    };
+    const errors = checkCrossFileIntegrity(dataSet);
+    expect(errors).toContainEqual(
+      expect.objectContaining({
+        file: "data/subscriptions/unsupported-sub.yaml",
+        field: "budgetClass.derivedFrom",
+      }),
+    );
   });
 });

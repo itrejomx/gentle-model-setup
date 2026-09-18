@@ -14,8 +14,27 @@ import type { DataSet } from "./types.js";
  */
 const EXAMPLE_ONLY_PROVIDER_PREFIXES = new Set(["openai"]);
 
+/**
+ * `SubscriptionRecord["budgetClass"]["derivedFrom"]` is typed
+ * `requestsPer5h | pricePerMTok` (the schema allows both), but only
+ * `requestsPer5h` derivation is implemented: `deriveBudgetClass` and
+ * `buildBundle`'s `injectBudgetClasses` both only ever read a plan's
+ * `requestsPer5h`. Declaring `pricePerMTok` today would silently derive
+ * every model's Budget Class from the wrong metric instead of failing
+ * loudly (T11.3).
+ */
+const SUPPORTED_BUDGET_CLASS_DERIVATIONS = new Set(["requestsPer5h"]);
+
 function runtimeFile(runtimeId: string): string {
   return `data/runtimes/${runtimeId}.yaml`;
+}
+
+function subscriptionFile(subscriptionId: string): string {
+  return `data/subscriptions/${subscriptionId}.yaml`;
+}
+
+function modelFile(model: { subscription: string; id: string }): string {
+  return `data/models/${model.subscription}/${model.id}.yaml`;
 }
 
 /**
@@ -32,8 +51,38 @@ export function checkCrossFileIntegrity(data: DataSet): DataError[] {
   const knownProviderPrefixes = new Set(
     data.subscriptions.map((subscription) => subscription.providerPrefix),
   );
+  const knownSubscriptionIds = new Set(data.subscriptions.map((subscription) => subscription.id));
 
   const errors: DataError[] = [];
+
+  // A model whose `subscription` does not resolve is an integrity error,
+  // never a degraded bundle (T11.3): `injectBudgetClasses` cannot derive a
+  // Budget Class without the subscription's thresholds, and silently
+  // falling back to an empty threshold list either produces a wrong
+  // `budgetClass: null` or an untyped throw from `deriveBudgetClass`,
+  // instead of this aggregated, typed error.
+  for (const model of data.models) {
+    if (!knownSubscriptionIds.has(model.subscription)) {
+      errors.push({
+        file: modelFile(model),
+        field: "subscription",
+        message: `subscription "${model.subscription}" is not declared by any file under data/subscriptions/`,
+      });
+    }
+  }
+
+  // A subscription declaring an unimplemented budgetClass.derivedFrom must
+  // fail loudly rather than let injectBudgetClasses derive from the wrong
+  // metric (T11.3).
+  for (const subscription of data.subscriptions) {
+    if (!SUPPORTED_BUDGET_CLASS_DERIVATIONS.has(subscription.budgetClass.derivedFrom)) {
+      errors.push({
+        file: subscriptionFile(subscription.id),
+        field: "budgetClass.derivedFrom",
+        message: `budgetClass.derivedFrom "${subscription.budgetClass.derivedFrom}" has no derivation implemented yet; only "requestsPer5h" is supported`,
+      });
+    }
+  }
 
   for (const runtime of data.runtimes) {
     const file = runtimeFile(runtime.id);

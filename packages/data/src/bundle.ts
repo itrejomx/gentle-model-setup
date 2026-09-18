@@ -33,12 +33,19 @@ function indexSubscriptionsById(
  * never stored in YAML). Derivation always uses the plan's own
  * `requestsPer5h` — never a value scaled by an optional `multiplier` — so
  * a temporary promo never re-tiers a model (T10.2b).
+ *
+ * Runs only after `buildBundle`'s `checkCrossFileIntegrity` call has
+ * already rejected a dangling `model.subscription` and an unsupported
+ * `budgetClass.derivedFrom` (T11.3), so `subscriptionsById.get(...)` is
+ * guaranteed to resolve here and its thresholds are guaranteed to be
+ * `requestsPer5h`-derived — never the silent, degraded fallback this used
+ * to produce for a dangling subscription.
  */
 function injectBudgetClasses(data: DataSet): BundleModelRecord[] {
   const subscriptionsById = indexSubscriptionsById(data.subscriptions);
   return data.models.map((model) => {
-    const subscription = subscriptionsById.get(model.subscription);
-    const thresholds = subscription?.budgetClass.thresholds ?? [];
+    const subscription = subscriptionsById.get(model.subscription)!;
+    const thresholds = subscription.budgetClass.thresholds;
     const plans: Record<string, BundleModelPlan> = {};
     for (const [planId, plan] of Object.entries(model.plans)) {
       plans[planId] = {
