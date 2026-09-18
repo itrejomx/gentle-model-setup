@@ -1,0 +1,40 @@
+# Codex's runtime mapping: which canonical Gentle AI phases Codex's live
+# `~/.codex/agents/` install carries, what Codex calls them, and how Codex
+# spells subscription provider prefixes.
+#
+# `agentMap` was read (read-only, T9.1) from the 17 `*.toml` files under
+# `~/.codex/agents/` on 2026-09-17: one entry per file basename, mapped to
+# its canonical phase id (data/phases/phases.yaml) — every entry is an
+# identity mapping, since Codex already spells `sdd-propose` (and every
+# other phase name) canonically. Codex's install has no
+# `gentle-orchestrator`, `gentle-ai-explore`, `gentle-ai-verify`,
+# `gentle-ai-worker`, `review-refuter`, `review-validator`, `sdd-remediate`,
+# `sdd-research`, `sdd-status`, or `sdd-sync` file; those canonical phases
+# are simply omitted, which the spec states is not a validation error.
+#
+# `prefixMap` translates `opencode-go` (the one committed subscription's
+# `providerPrefix`, data/subscriptions/opencode-go.yaml) as an identity
+# mapping — no translation is needed for this runtime today, but the spec
+# still requires at least one entry.
+id: codex
+displayName: Codex
+agentMap:
+  jd-fix-agent: jd-fix-agent
+  jd-judge-a: jd-judge-a
+  jd-judge-b: jd-judge-b
+  review-readability: review-readability
+  review-reliability: review-reliability
+  review-resilience: review-resilience
+  review-risk: review-risk
+  sdd-apply: sdd-apply
+  sdd-archive: sdd-archive
+  sdd-design: sdd-design
+  sdd-explore: sdd-explore
+  sdd-init: sdd-init
+  sdd-onboard: sdd-onboard
+  sdd-propose: sdd-propose
+  sdd-spec: sdd-spec
+  sdd-tasks: sdd-tasks
+  sdd-verify: sdd-verify
+prefixMap:
+  opencode-go: opencode-go

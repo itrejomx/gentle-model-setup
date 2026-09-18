@@ -1,0 +1,45 @@
+# Claude Code's runtime mapping: which canonical Gentle AI phases Claude
+# Code's live `~/.claude/agents/` install carries, what Claude Code calls
+# them, and how Claude Code spells subscription provider prefixes.
+#
+# `agentMap` was read (read-only, T9.1) from the 19 `*.md` files under
+# `~/.claude/agents/` on 2026-09-17: one entry per file basename, mapped to
+# its canonical phase id (data/phases/phases.yaml) — every entry is an
+# identity mapping, since Claude Code already spells `sdd-propose` (and
+# every other phase name) canonically. This count (19) includes
+# `sdd-research`; the frozen design spec text (design.md's own worked
+# example comment: "Pi 24, OpenCode 20, Claude Code 19, Codex 17") already
+# matches the live install exactly. Claude Code's install has no
+# `gentle-orchestrator`, `gentle-ai-explore`, `gentle-ai-verify`,
+# `gentle-ai-worker`, `review-validator`, `sdd-remediate`, `sdd-status`, or
+# `sdd-sync` file; those canonical phases are simply omitted, which the spec
+# states is not a validation error.
+#
+# `prefixMap` translates `opencode-go` (the one committed subscription's
+# `providerPrefix`, data/subscriptions/opencode-go.yaml) as an identity
+# mapping — no translation is needed for this runtime today, but the spec
+# still requires at least one entry.
+id: claude-code
+displayName: Claude Code
+agentMap:
+  jd-fix-agent: jd-fix-agent
+  jd-judge-a: jd-judge-a
+  jd-judge-b: jd-judge-b
+  review-readability: review-readability
+  review-refuter: review-refuter
+  review-reliability: review-reliability
+  review-resilience: review-resilience
+  review-risk: review-risk
+  sdd-apply: sdd-apply
+  sdd-archive: sdd-archive
+  sdd-design: sdd-design
+  sdd-explore: sdd-explore
+  sdd-init: sdd-init
+  sdd-onboard: sdd-onboard
+  sdd-propose: sdd-propose
+  sdd-research: sdd-research
+  sdd-spec: sdd-spec
+  sdd-tasks: sdd-tasks
+  sdd-verify: sdd-verify
+prefixMap:
+  opencode-go: opencode-go
