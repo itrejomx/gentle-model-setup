@@ -1,0 +1,32 @@
+name: CI
+
+# Threat matrix (CI workflow trust): `pull_request` only, never
+# `pull_request_target` -- a fork PR's workflow runs with no repository
+# secrets and read-only permissions, so a modified workflow in the PR
+# itself cannot exfiltrate anything or write back to the repository.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm validate
+
+      - run: pnpm test
+
+      - run: pnpm build

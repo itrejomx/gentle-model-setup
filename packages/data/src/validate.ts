@@ -76,6 +76,28 @@ function toDataErrors(
   return errors.map((error) => {
     const missingProperty = (error.params as { missingProperty?: string })
       .missingProperty;
+    const additionalProperty = (
+      error.params as { additionalProperty?: string }
+    ).additionalProperty;
+
+    // WU2 advisory (R3-additional-properties-field-unnamed): Ajv's default
+    // `additionalProperties` error names only the object it rejected
+    // (`instancePath`), never the extra key itself (`params.additionalProperty`),
+    // so the reported field and message would otherwise not say which field
+    // is unexpected.
+    if (error.keyword === "additionalProperties" && additionalProperty !== undefined) {
+      const objectField = instancePathToField(error.instancePath, undefined);
+      const field =
+        objectField === "<document>"
+          ? additionalProperty
+          : `${objectField}.${additionalProperty}`;
+      return {
+        file,
+        field,
+        message: `must NOT have additional property "${additionalProperty}"`,
+      };
+    }
+
     return {
       file,
       field: instancePathToField(error.instancePath, missingProperty),

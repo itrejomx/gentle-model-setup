@@ -96,6 +96,18 @@ describe("validateModel", () => {
     );
   });
 
+  // WU2 advisory (R3-blank-evidence-unproved): whitespace-only evidence
+  // passes the schema's `minLength: 1` but must still fail the code-level
+  // check, which trims before checking length. Not previously tested.
+  it("rejects a strength-3 axis whose evidence is whitespace only, naming the axis", () => {
+    const doc = loadFixture("invalid/model-blank-evidence/model.yaml");
+    const errors = validateModel(doc, "model.yaml");
+
+    expect(errors.some((error) => error.field === "strengths.codingTools")).toBe(
+      true,
+    );
+  });
+
   it("rejects a path-traversal id, naming the id field", () => {
     const doc = loadFixture("invalid/model-bad-id/model.yaml");
     const errors = validateModel(doc, "model.yaml");
@@ -225,5 +237,19 @@ describe("validateOverride", () => {
       true,
     );
     expect(errors.some((error) => error.field === "tier")).toBe(true);
+  });
+
+  // WU2 advisory (R3-additional-properties-field-unnamed): Ajv's default
+  // additionalProperties error names the object it rejected, not the extra
+  // key itself, so the offending field must be named explicitly.
+  it("rejects an unknown top-level field, naming it in both the field and the message", () => {
+    const doc = loadFixture("invalid/override-unknown-field/override.yaml");
+    const errors = validateOverride(doc, "override.yaml");
+
+    const unknownFieldError = errors.find((error) =>
+      error.field.endsWith("notAField"),
+    );
+    expect(unknownFieldError).toBeDefined();
+    expect(unknownFieldError?.message).toContain("notAField");
   });
 });

@@ -1,8 +1,8 @@
-import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { readYamlFile } from "../src/yaml.js";
+import { readYamlFile, YamlLoadError } from "../src/yaml.js";
 
 const cleanupDirs: string[] = [];
 
@@ -33,6 +33,24 @@ describe("readYamlFile containment (threat matrix: untrusted data parsing)", () 
     symlinkSync(outsideFile, symlinkPath);
 
     expect(() => readYamlFile(symlinkPath, rootDir)).toThrow(/escapes/i);
+  });
+});
+
+// WU2 advisory (R3-loader-raw-fs-errors): `readYamlFile`'s own docstring
+// already claims "unreadable file" throws a typed YamlLoadError, but the
+// read was not wrapped -- a raw fs error escaped instead. Both CLIs call
+// through `readYamlFile` (via `loadData`/`validateData`) with no catch of
+// their own for anything but `YamlLoadError`, so an untyped fs error would
+// otherwise crash the CLI uncaught instead of producing a clean exit-1
+// error surface.
+describe("readYamlFile raw fs error surface (threat matrix: CLI argument composition / error surfaces)", () => {
+  it("wraps a raw fs read failure (e.g. a directory named *.yaml) in a typed YamlLoadError", () => {
+    const rootDir = mkdtempSync(join(tmpdir(), "data-root-"));
+    cleanupDirs.push(rootDir);
+    const trapPath = join(rootDir, "trap.yaml");
+    mkdirSync(trapPath);
+
+    expect(() => readYamlFile(trapPath, rootDir)).toThrow(YamlLoadError);
   });
 });
 
