@@ -27,6 +27,7 @@ export { deriveBudgetClass } from "./budget-class.js";
 export { buildBundle, hashPayload, loadBundle } from "./bundle.js";
 export { canonicalJson } from "./canonical.js";
 export { checkCrossFileIntegrity } from "./integrity.js";
+export { loadData, validateData } from "./load-data.js";
 export {
   validateModel,
   validateOverride,
