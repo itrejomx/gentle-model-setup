@@ -211,13 +211,46 @@ describe("opencode-go catalog", () => {
     expect(baseClass).toBe("volume");
   });
 
-  // Every promo-bearing model (one carrying `plans.go.multiplier`) must keep
-  // the same derived Budget Class before and after the promo is applied.
-  // Scanning the whole catalog (rather than hard-coding one id) keeps this
-  // invariant honest as new promos are added or expire in later slices —
-  // but a data-driven scan over an empty set would trivially "pass" without
-  // proving anything, so the non-empty assertion below guards against that.
-  it("every promo-bearing model keeps its Budget Class across the promo", () => {
+  // Proves the promo-invariance rule itself against a synthetic
+  // promo-bearing plan, entirely independent of the live catalog: the only
+  // promo committed today (deepseek-v4.1-flash) expires 2026-09-20, and a
+  // catalog-only scan would go vacuous the moment it is removed. This test
+  // keeps failing loudly if `deriveBudgetClass` (or a future call site) ever
+  // starts reading a multiplier-scaled cap instead of the base one, with or
+  // without any live promo in the data.
+  it("a synthetic promo multiplier never changes the derived Budget Class", () => {
+    const syntheticThresholds: Threshold[] = [
+      { class: "sniper", max: 199 },
+      { class: "semi", max: 499 },
+      { class: "workhorse", max: 5000 },
+      { class: "volume", max: null },
+    ];
+    const syntheticPlan = { requestsPer5h: 1625, multiplier: 4 };
+
+    const baseClass = deriveBudgetClass(syntheticPlan.requestsPer5h, syntheticThresholds);
+    const promotedRequestsPer5h = syntheticPlan.requestsPer5h * syntheticPlan.multiplier;
+    const promotedClass = deriveBudgetClass(promotedRequestsPer5h, syntheticThresholds);
+
+    // The multiplier alone would cross a threshold (1,625 is workhorse;
+    // 6,500 is volume) if derivation ever used it, so this is a genuine
+    // proof, not a coincidence of equal classes either side of the promo.
+    expect(baseClass).toBe("workhorse");
+    expect(promotedClass).not.toBe(baseClass);
+
+    // The invariant: derivation must use the base cap, so a model's own
+    // recorded Budget Class never reads the promoted figure.
+    const derivedFromBaseCap = deriveBudgetClass(syntheticPlan.requestsPer5h, syntheticThresholds);
+    expect(derivedFromBaseCap).toBe(baseClass);
+  });
+
+  // Every promo-bearing model actually in the catalog today (one carrying
+  // `plans.go.multiplier`) must also keep the same derived Budget Class
+  // before and after its promo. This scan is additional real-data
+  // assurance on top of the synthetic proof above, so it is written to
+  // pass — not vacuously, but harmlessly — once no catalog model carries a
+  // multiplier any more (the deepseek-v4.1-flash promo above ends
+  // 2026-09-20).
+  it("every currently promo-bearing catalog model keeps its Budget Class across the promo", () => {
     const subscription = readYamlFile(subscriptionPath, dataRoot) as SubscriptionDoc;
     const { thresholds } = subscription.budgetClass;
 
@@ -225,10 +258,6 @@ describe("opencode-go catalog", () => {
       const doc = loadModel(id);
       return typeof doc.plans["go"]?.multiplier === "number";
     });
-
-    // Guard against a vacuous pass: this assertion only proves the
-    // invariant if at least one promo-bearing model actually exists.
-    expect(promoBearingIds.length).toBeGreaterThan(0);
 
     for (const id of promoBearingIds) {
       const doc = loadModel(id);

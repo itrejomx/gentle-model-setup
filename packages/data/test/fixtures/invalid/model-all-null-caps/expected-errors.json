@@ -1,0 +1,6 @@
+[
+  {
+    "field": "status",
+    "message": "status \"current\" requires at least one plan with a numeric requestsPer5h, but every plan has requestsPer5h: null"
+  }
+]

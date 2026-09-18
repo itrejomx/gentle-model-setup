@@ -1,0 +1,258 @@
+# The 27 canonical Gentle AI phases — the union of every Gentle AI agent
+# that carries a model assignment across Pi, OpenCode, Claude Code, and
+# Codex.
+#
+# Ids, groups, and default roles are sourced from
+# docs/superpowers/specs/2026-09-14-model-profile-site-design.md, section
+# 3.2 "Phase parameters" (lines 58-64) — the design spec the PRD names as
+# its source (docs/prd/2026-09-14-model-profile-site.md). That table is the
+# only place in this repository that enumerates all 27 ids. The frozen
+# openspec reference for this slice
+# (openspec/changes/scaffold-data-contract-go-catalog/design.md) gives only
+# one example row (`sdd-apply`); its canonical-phases/spec.md states the
+# count (27) and a role-assignment summary rule, but no id list.
+#
+# Role-assignment discrepancy (flagged for maintainer resolution, not
+# resolved here): the design spec table above assigns `jd-fix-agent:
+# implementer` and specific roles to the three Worker phases
+# (`gentle-ai-explore: neutral`, `gentle-ai-verify: verifier`,
+# `gentle-ai-worker: implementer`). canonical-phases/spec.md's shorter
+# summary rule ("every other phase is neutral unless it is a review-*
+# verifier") does not mention `jd-fix-agent` or the Worker group at all,
+# and read literally would make those four phases `neutral` instead. This
+# file follows the design spec's explicit, more detailed table, since it is
+# the actual document the PRD cites as authoritative and the only source
+# for phase identity in the first place.
+#
+# `callPattern` is documented for exactly two phases: `gentle-orchestrator`
+# (loop, design spec line 60) and `sdd-apply` (loop, confirmed by both
+# canonical-phases/spec.md's own scenario and by design.md's example row,
+# reused verbatim below). `sdd-remediate` is proposed as `loop` too, by
+# analogy with `sdd-apply` (same implementer role, same iterative
+# fix/apply nature). Every other phase is proposed as `one-shot`: nothing
+# in either design document describes the remaining SDD, Judgment Day,
+# Review, or Worker phases as iterating internally.
+#
+# Per-phase `weights` have no source document anywhere in the repository.
+# Each row below carries a one-line rationale for its own proposal and
+# every weights map sums to 1.0 (the only worked example, `sdd-apply`,
+# does the same). These are proposals only, to be revisited once
+# packages/engine (issue #3) actually consumes them for scoring.
+phases:
+  - id: gentle-orchestrator
+    group: orchestration
+    callPattern: loop
+    role: neutral
+    # Coordinates the whole session and delegates; needs sustained
+    # reasoning and long context to track state across many delegated
+    # calls, not coding-tool or multimodal work of its own.
+    weights: { oneShotReasoning: 0.2, sustainedReasoning: 0.3, codingTools: 0.05, longContext: 0.25, multimodal: 0, cheap: 0.2 }
+
+  - id: sdd-init
+    group: sdd
+    callPattern: one-shot
+    role: neutral
+    # Detects stack and bootstraps persistence; light one-shot judgment,
+    # mostly mechanical, so weighted toward cheap.
+    weights: { oneShotReasoning: 0.25, sustainedReasoning: 0.1, codingTools: 0.15, longContext: 0.15, multimodal: 0, cheap: 0.35 }
+
+  - id: sdd-explore
+    group: sdd
+    callPattern: one-shot
+    role: neutral
+    # Reads the existing codebase and requirements before any proposal;
+    # long context to hold what it read, not to produce code.
+    weights: { oneShotReasoning: 0.25, sustainedReasoning: 0.2, codingTools: 0.1, longContext: 0.35, multimodal: 0, cheap: 0.1 }
+
+  - id: sdd-research
+    group: sdd
+    callPattern: one-shot
+    role: neutral
+    # Synthesizes external, source-backed evidence; reasoning and long
+    # context to hold many sources, no coding output.
+    weights: { oneShotReasoning: 0.3, sustainedReasoning: 0.15, codingTools: 0.05, longContext: 0.3, multimodal: 0, cheap: 0.2 }
+
+  - id: sdd-propose
+    group: sdd
+    callPattern: one-shot
+    role: neutral
+    # Architectural framing decisions; the heaviest one-shot judgment call
+    # before any spec exists.
+    weights: { oneShotReasoning: 0.4, sustainedReasoning: 0.15, codingTools: 0.05, longContext: 0.2, multimodal: 0, cheap: 0.2 }
+
+  - id: sdd-spec
+    group: sdd
+    callPattern: one-shot
+    role: neutral
+    # Structured requirements writing; moderate reasoning over a wide set
+    # of prior artifacts.
+    weights: { oneShotReasoning: 0.3, sustainedReasoning: 0.15, codingTools: 0.1, longContext: 0.25, multimodal: 0, cheap: 0.2 }
+
+  - id: sdd-design
+    group: sdd
+    callPattern: one-shot
+    role: neutral
+    # Architecture decisions with tradeoffs; the deepest one-shot and
+    # sustained reasoning demand of any planning phase.
+    weights: { oneShotReasoning: 0.4, sustainedReasoning: 0.25, codingTools: 0.1, longContext: 0.2, multimodal: 0, cheap: 0.05 }
+
+  - id: sdd-tasks
+    group: sdd
+    callPattern: one-shot
+    role: neutral
+    # Mechanical breakdown of an approved design into a task checklist;
+    # lighter reasoning than sdd-design.
+    weights: { oneShotReasoning: 0.2, sustainedReasoning: 0.1, codingTools: 0.15, longContext: 0.25, multimodal: 0, cheap: 0.3 }
+
+  - id: sdd-apply
+    group: sdd
+    callPattern: loop
+    role: implementer
+    # Reused verbatim from design.md's own example row
+    # (openspec/changes/scaffold-data-contract-go-catalog/design.md:241):
+    # iterative implementation loop, coding tools dominate.
+    weights: { oneShotReasoning: 0.1, sustainedReasoning: 0.25, codingTools: 0.4, longContext: 0.15, multimodal: 0, cheap: 0.1 }
+
+  - id: sdd-remediate
+    group: sdd
+    callPattern: loop
+    role: implementer
+    # Proposed loop by analogy with sdd-apply (same implementer role, same
+    # iterative fix nature); slightly more one-shot weight for diagnosing
+    # what to remediate before touching code.
+    weights: { oneShotReasoning: 0.15, sustainedReasoning: 0.2, codingTools: 0.4, longContext: 0.15, multimodal: 0, cheap: 0.1 }
+
+  - id: sdd-verify
+    group: sdd
+    callPattern: one-shot
+    role: verifier
+    # Validates implementation against spec/design/tasks; long context to
+    # compare several artifacts, plus some coding-tool use to run checks.
+    weights: { oneShotReasoning: 0.25, sustainedReasoning: 0.15, codingTools: 0.2, longContext: 0.3, multimodal: 0, cheap: 0.1 }
+
+  - id: sdd-archive
+    group: sdd
+    callPattern: one-shot
+    role: neutral
+    # Copies specs and closes the cycle; almost entirely mechanical.
+    weights: { oneShotReasoning: 0.1, sustainedReasoning: 0.05, codingTools: 0.1, longContext: 0.15, multimodal: 0, cheap: 0.6 }
+
+  - id: sdd-onboard
+    group: sdd
+    callPattern: one-shot
+    role: neutral
+    # Guided, pedagogical walkthrough of an existing cycle; conversational,
+    # not reasoning-heavy.
+    weights: { oneShotReasoning: 0.2, sustainedReasoning: 0.1, codingTools: 0.05, longContext: 0.15, multimodal: 0, cheap: 0.5 }
+
+  - id: sdd-status
+    group: sdd
+    callPattern: one-shot
+    role: neutral
+    # Reports structured status from existing artifacts; read and format,
+    # no real judgment.
+    weights: { oneShotReasoning: 0.15, sustainedReasoning: 0.05, codingTools: 0.05, longContext: 0.2, multimodal: 0, cheap: 0.55 }
+
+  - id: sdd-sync
+    group: sdd
+    callPattern: one-shot
+    role: neutral
+    # Synchronizes artifact state (e.g. an Engram mirror); mechanical, with
+    # a bit more structure than sdd-status.
+    weights: { oneShotReasoning: 0.15, sustainedReasoning: 0.05, codingTools: 0.1, longContext: 0.2, multimodal: 0, cheap: 0.5 }
+
+  - id: jd-judge-a
+    group: judgment-day
+    callPattern: one-shot
+    role: judge-a
+    # Blind adversarial review of a whole candidate; deep one-shot judgment
+    # over a large diff, no code output of its own.
+    weights: { oneShotReasoning: 0.4, sustainedReasoning: 0.1, codingTools: 0.05, longContext: 0.35, multimodal: 0, cheap: 0.1 }
+
+  - id: jd-judge-b
+    group: judgment-day
+    callPattern: one-shot
+    role: judge-b
+    # Symmetric with jd-judge-a: an independent blind judge over the same
+    # candidate.
+    weights: { oneShotReasoning: 0.4, sustainedReasoning: 0.1, codingTools: 0.05, longContext: 0.35, multimodal: 0, cheap: 0.1 }
+
+  - id: jd-fix-agent
+    group: judgment-day
+    callPattern: one-shot
+    role: implementer
+    # Applies only confirmed fixes from the judges' verdict — one bounded
+    # correction, not an open-ended loop; coding tools dominate.
+    weights: { oneShotReasoning: 0.15, sustainedReasoning: 0.15, codingTools: 0.45, longContext: 0.15, multimodal: 0, cheap: 0.1 }
+
+  - id: review-risk
+    group: review
+    callPattern: one-shot
+    role: verifier
+    # Security, privilege, and data-exposure lens over the whole candidate;
+    # deep reasoning, wide context.
+    weights: { oneShotReasoning: 0.35, sustainedReasoning: 0.1, codingTools: 0.1, longContext: 0.35, multimodal: 0, cheap: 0.1 }
+
+  - id: review-readability
+    group: review
+    callPattern: one-shot
+    role: verifier
+    # Naming, complexity, and maintainability lens; moderate reasoning,
+    # narrower context than the risk lens.
+    weights: { oneShotReasoning: 0.3, sustainedReasoning: 0.1, codingTools: 0.15, longContext: 0.25, multimodal: 0, cheap: 0.2 }
+
+  - id: review-reliability
+    group: review
+    callPattern: one-shot
+    role: verifier
+    # Behavior-first test and coverage lens; needs coding-tool use to
+    # assess tests, not just read prose about them.
+    weights: { oneShotReasoning: 0.3, sustainedReasoning: 0.1, codingTools: 0.25, longContext: 0.25, multimodal: 0, cheap: 0.1 }
+
+  - id: review-resilience
+    group: review
+    callPattern: one-shot
+    role: verifier
+    # Fallback, retry, and observability lens across the whole system, not
+    # just the diff; broad context.
+    weights: { oneShotReasoning: 0.3, sustainedReasoning: 0.15, codingTools: 0.15, longContext: 0.3, multimodal: 0, cheap: 0.1 }
+
+  - id: review-refuter
+    group: review
+    callPattern: one-shot
+    role: verifier
+    # Detached read-only refuter over one whole batch of inferential
+    # findings; deep reasoning, wide context, no code output.
+    weights: { oneShotReasoning: 0.35, sustainedReasoning: 0.1, codingTools: 0.1, longContext: 0.35, multimodal: 0, cheap: 0.1 }
+
+  - id: review-validator
+    group: review
+    callPattern: one-shot
+    role: verifier
+    # Targeted validation of one bounded correction; reasoning plus
+    # coding-tool use to check the fix actually holds.
+    weights: { oneShotReasoning: 0.25, sustainedReasoning: 0.1, codingTools: 0.25, longContext: 0.3, multimodal: 0, cheap: 0.1 }
+
+  - id: gentle-ai-explore
+    group: workers
+    callPattern: one-shot
+    role: neutral
+    # Bounded read-only exploration/mapping worker; long context to
+    # compress many files into a short handoff.
+    weights: { oneShotReasoning: 0.2, sustainedReasoning: 0.1, codingTools: 0.05, longContext: 0.4, multimodal: 0, cheap: 0.25 }
+
+  - id: gentle-ai-verify
+    group: workers
+    callPattern: one-shot
+    role: verifier
+    # Bounded verification worker; reasoning plus coding-tool use to run
+    # and interpret checks.
+    weights: { oneShotReasoning: 0.25, sustainedReasoning: 0.1, codingTools: 0.25, longContext: 0.25, multimodal: 0, cheap: 0.15 }
+
+  - id: gentle-ai-worker
+    group: workers
+    callPattern: one-shot
+    role: implementer
+    # Bounded delegated writer for one task per invocation, not a
+    # continuous loop; coding tools dominate.
+    weights: { oneShotReasoning: 0.1, sustainedReasoning: 0.15, codingTools: 0.45, longContext: 0.2, multimodal: 0, cheap: 0.1 }

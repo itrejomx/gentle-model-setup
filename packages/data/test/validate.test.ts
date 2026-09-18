@@ -102,6 +102,26 @@ describe("validateModel", () => {
 
     expect(errors.some((error) => error.field === "id")).toBe(true);
   });
+
+  // checkCurrentRequiresCap: a `current` model needs only one plan with a
+  // numeric requestsPer5h among several, some of which are null.
+  it("accepts a current model with several plans where only one has a numeric cap", () => {
+    const doc = loadFixture("valid/model-multi-plan-partial-caps/model.yaml");
+    expect(validateModel(doc, "model.yaml")).toEqual([]);
+  });
+
+  it("rejects a current model whose every plan has a null cap, naming the file and the exact message", () => {
+    const doc = loadFixture("invalid/model-all-null-caps/model.yaml");
+    const expected = loadExpectedErrors(
+      "invalid/model-all-null-caps/expected-errors.json",
+    );
+    const errors = validateModel(doc, "model.yaml");
+
+    const statusError = errors.find((error) => error.field === "status");
+    expect(statusError).toBeDefined();
+    expect(statusError?.file).toBe("model.yaml");
+    expect(statusError?.message).toBe(expected[0]?.message);
+  });
 });
 
 describe("validatePhases", () => {
@@ -119,6 +139,21 @@ describe("validatePhases", () => {
     expect(errors.every((error) => error.file === "phases.yaml")).toBe(true);
     expect(
       errors.some((error) => error.field === "phases.0.weights.cheap"),
+    ).toBe(true);
+  });
+
+  // The JSON Schema has no way to reject a duplicate array entry, so phase-id
+  // uniqueness is a code check (mirrors `checkCurrentRequiresCap` in shape).
+  it("rejects a duplicate phase id, naming the id", () => {
+    const doc = loadFixture("invalid/phases-duplicate-id/phases.yaml");
+    const errors = validatePhases(doc, "phases.yaml");
+
+    expect(errors.every((error) => error.file === "phases.yaml")).toBe(true);
+    expect(
+      errors.some(
+        (error) =>
+          error.field === "phases.1.id" && error.message.includes("sdd-apply"),
+      ),
     ).toBe(true);
   });
 });

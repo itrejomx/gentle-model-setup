@@ -179,8 +179,43 @@ export function validateModel(doc: unknown, file: string): DataError[] {
   return [...schemaErrors, ...strengthErrors, ...capErrors];
 }
 
+/**
+ * The JSON Schema has no way to reject a repeated array entry, so phase-id
+ * uniqueness is a code check, mirroring `checkCurrentRequiresCap`'s shape:
+ * re-run over the parsed document and name the exact duplicate id and its
+ * index.
+ */
+function checkPhaseIdsUnique(doc: unknown, file: string): DataError[] {
+  if (typeof doc !== "object" || doc === null) return [];
+  const record = doc as Record<string, unknown>;
+  const phases = record["phases"];
+  if (!Array.isArray(phases)) return [];
+
+  const seenAtIndex = new Map<string, number>();
+  const errors: DataError[] = [];
+  phases.forEach((phase, index) => {
+    if (typeof phase !== "object" || phase === null) return;
+    const id = (phase as Record<string, unknown>)["id"];
+    if (typeof id !== "string") return;
+
+    const firstIndex = seenAtIndex.get(id);
+    if (firstIndex !== undefined) {
+      errors.push({
+        file,
+        field: `phases.${index}.id`,
+        message: `duplicate phase id "${id}" (first declared at phases.${firstIndex}.id)`,
+      });
+      return;
+    }
+    seenAtIndex.set(id, index);
+  });
+  return errors;
+}
+
 export function validatePhases(doc: unknown, file: string): DataError[] {
-  return validateAgainstSchema(validatePhasesSchema, doc, file);
+  const schemaErrors = validateAgainstSchema(validatePhasesSchema, doc, file);
+  const uniqueErrors = checkPhaseIdsUnique(doc, file);
+  return [...schemaErrors, ...uniqueErrors];
 }
 
 export function validateRuntime(doc: unknown, file: string): DataError[] {
