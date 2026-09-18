@@ -1,0 +1,12 @@
+id: fixture-sub
+displayName: Fixture Subscription
+providerPrefix: fixture
+budgetClass:
+  derivedFrom: requestsPer5h
+  thresholds:
+    - { class: sniper, max: 199 }
+    - { class: volume, max: null }
+plans:
+  - { id: go, displayName: Go, priceUsdPerMonth: 10 }
+catalogSourceUrl: https://example.com/catalog
+verifiedAt: 2026-09-14
