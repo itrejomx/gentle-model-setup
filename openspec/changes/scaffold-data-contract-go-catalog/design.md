@@ -242,7 +242,7 @@ phases:
 ```
 
 ```yaml
-# data/runtimes/claude-code.yaml   (19 agentMap entries; Pi 24, OpenCode 20, Codex 17)
+# data/runtimes/claude-code.yaml   (19 agentMap entries; Pi 24, OpenCode 21, Codex 17)
 id: claude-code
 displayName: Claude Code
 agentMap:          # runtime agent name -> canonical phase (Pi: sdd-proposal -> sdd-propose)
@@ -276,7 +276,7 @@ Strict TDD, vertical slices: one RED test, one minimal implementation, repeat. N
 | `data-bundle` | Integration | `buildBundle` → write → `loadBundle` round-trips; a tampered payload byte throws `BundleHashMismatchError` | Temp dir |
 | `opencode-go-catalog` | Data-driven | Every committed model file validates; every `current` model has a numeric `requestsPer5h` on plan `go`, six strengths, privacy, `verifiedAt`; 29 files total | Glob the real `data/` tree |
 | `canonical-phases` | Data-driven | Exactly 27 rows; ids match the canonical list; every row has call pattern, weights summing > 0, role | Glob |
-| `runtime-mappings` | Data-driven | `agentMap` entry counts Pi 24, OpenCode 20, Claude Code 19, Codex 17; every `agentMap` value resolves to a phase id in `phases.yaml`; every `prefixMap` key is a known provider prefix | Glob |
+| `runtime-mappings` | Data-driven | `agentMap` entry counts Pi 24, OpenCode 21, Claude Code 19, Codex 17; every `agentMap` value resolves to a phase id in `phases.yaml`; every `prefixMap` key is a known provider prefix | Glob |
 | `workspace-scaffold` | Smoke | `pnpm -r typecheck` and `pnpm test` run green from a clean install | CI |
 | `ci-validation` | Integration | The workflow itself runs on this slice's PR | Verified by the run, not by a unit test |
 
@@ -321,7 +321,7 @@ lands so its diff carries only its own work unit. Authored lines exclude `build/
 | 6 | Catalog: alibaba (5), deepseek (4) — 9 models | All 9 validate, promo multiplier does not re-tier | ~330 |
 | 7 | Catalog: minimax (3), xiaomi (2), tencent (2), meituan (1), meta/Muse Spark (2) — 10 models | 29 files total; unpublished retention and uncapped rows handled | ~370 |
 | 8 | `phases.yaml` | Exactly 27 rows with call pattern, weights, role | ~330 |
-| 9 | Four runtime mappings | `agentMap` counts 24/20/19/17; every `agentMap` value resolves to a phase id; Pi maps `sdd-proposal` → `sdd-propose` and `openai` → `openai-codex` | ~220 |
+| 9 | Four runtime mappings | `agentMap` counts 24/21/19/17; every `agentMap` value resolves to a phase id; Pi maps `sdd-proposal` → `sdd-propose` and `openai` → `openai-codex` | ~220 |
 | 10 | Canonical JSON, hash, `buildBundle`/`loadBundle`, build CLI, `ci.yml` | `pnpm build` emits `build/data.json`; round-trip and determinism tests green; CI runs on the PR | ~320 |
 
 `Decision needed before apply: No` — `auto-chain` is cached and every slice fits the 400-line budget.

@@ -29,7 +29,7 @@ without the engine ever seeing runtime detail.
 ### Requirement: Agent map entry counts match verified counts
 
 Each runtime's `agentMap` MUST contain exactly the verified number of
-entries: Pi 24, OpenCode 20, Claude Code 19, Codex 17.
+entries: Pi 24, OpenCode 21, Claude Code 19, Codex 17.
 
 #### Scenario: Pi's agent map has 24 entries
 

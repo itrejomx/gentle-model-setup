@@ -63,7 +63,7 @@ Pi, OpenCode, Claude Code, and Codex installs): 27 rows.
 | Review | `review-risk`, `review-readability`, `review-reliability`, `review-resilience`, `review-refuter`, `review-validator` | verifiers |
 | Workers | `gentle-ai-explore`, `gentle-ai-verify`, `gentle-ai-worker` | neutral, verifier, implementer |
 
-No single runtime has all 27. Pi has 24, OpenCode 20, Claude Code 18, Codex
+No single runtime has all 27. Pi has 24, OpenCode 21, Claude Code 18, Codex
 17, and Pi names one differently (`sdd-proposal`). Runtime presence and
 naming live in per-runtime mappings (section 4), never in the engine.
 
