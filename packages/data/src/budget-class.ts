@@ -19,6 +19,12 @@ export function deriveBudgetClass(
   for (const threshold of thresholds) {
     if (threshold.max === null) return threshold.class;
     if (threshold.max <= previousMax) {
+      // Unreachable for data that passed `validateSubscription`
+      // (`validate.ts`'s `checkThresholds`, issue #32): it rejects any
+      // `budgetClass.thresholds` list whose `max` values do not strictly
+      // ascend before this function ever runs. Kept as an internal
+      // assertion, not a second error path, for a caller that builds
+      // `thresholds` some other way.
       throw new Error(
         `thresholds must ascend: "${threshold.class}" max ${threshold.max} does not exceed the previous max ${previousMax}`,
       );
@@ -27,6 +33,11 @@ export function deriveBudgetClass(
     previousMax = threshold.max;
   }
 
+  // Unreachable for data that passed `validateSubscription`
+  // (`checkThresholds`, issue #32): it rejects any `budgetClass.thresholds`
+  // list whose last entry's `max` is not `null` before this function ever
+  // runs. Kept as an internal assertion, not a second error path, for a
+  // caller that builds `thresholds` some other way.
   throw new Error(
     "thresholds must end with a null max to cover every value above the last boundary",
   );

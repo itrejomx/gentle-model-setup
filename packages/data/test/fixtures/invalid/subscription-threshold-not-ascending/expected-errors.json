@@ -1,0 +1,3 @@
+[
+  { "field": "budgetClass.thresholds", "message": "thresholds must ascend" }
+]

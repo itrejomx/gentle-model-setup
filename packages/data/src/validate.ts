@@ -156,8 +156,72 @@ function buildStrengthEvidenceError(
   };
 }
 
+/**
+ * The JSON Schema can express `budgetClass.thresholds` as a non-empty array
+ * of `{ class, max }` objects (`minItems: 1`), but not the ordering rules
+ * `deriveBudgetClass` (`budget-class.ts`) depends on: strictly ascending
+ * `max` values, with exactly one `null` `max`, on the last entry, covering
+ * every value above the last finite boundary. Those rules were previously
+ * enforced only lazily, the first time `deriveBudgetClass` reached a broken
+ * list, with a bare `Error` (issue #32). This check re-runs them over the
+ * parsed document so a broken list is a data error at the door instead.
+ */
+function checkThresholds(doc: unknown, file: string): DataError[] {
+  if (typeof doc !== "object" || doc === null) return [];
+  const record = doc as Record<string, unknown>;
+  const budgetClass = record["budgetClass"];
+  if (typeof budgetClass !== "object" || budgetClass === null) return [];
+  const thresholds = (budgetClass as Record<string, unknown>)["thresholds"];
+  if (!Array.isArray(thresholds)) return [];
+
+  const lastIndex = thresholds.length - 1;
+  const last = thresholds[lastIndex];
+  if (typeof last !== "object" || last === null) return [];
+  const lastMax = (last as Record<string, unknown>)["max"];
+  if (lastMax !== null) {
+    return [
+      {
+        file,
+        field: "budgetClass.thresholds",
+        message: `the last threshold's max must be null to cover every value above the last boundary, got ${JSON.stringify(lastMax)}`,
+      },
+    ];
+  }
+
+  let previousMax = -Infinity;
+  for (let index = 0; index < lastIndex; index++) {
+    const threshold = thresholds[index];
+    if (typeof threshold !== "object" || threshold === null) return [];
+    const max = (threshold as Record<string, unknown>)["max"];
+    if (max === null) {
+      return [
+        {
+          file,
+          field: "budgetClass.thresholds",
+          message: `only the last entry may have a null max, but the entry at index ${index} does`,
+        },
+      ];
+    }
+    if (typeof max !== "number") return [];
+    if (max <= previousMax) {
+      return [
+        {
+          file,
+          field: "budgetClass.thresholds",
+          message: `thresholds must ascend: max ${max} at index ${index} does not exceed the previous max ${previousMax}`,
+        },
+      ];
+    }
+    previousMax = max;
+  }
+
+  return [];
+}
+
 export function validateSubscription(doc: unknown, file: string): DataError[] {
-  return validateAgainstSchema(validateSubscriptionSchema, doc, file);
+  const schemaErrors = validateAgainstSchema(validateSubscriptionSchema, doc, file);
+  const thresholdErrors = checkThresholds(doc, file);
+  return [...schemaErrors, ...thresholdErrors];
 }
 
 /**
