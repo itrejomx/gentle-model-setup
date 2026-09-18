@@ -1,0 +1,22 @@
+# Re-capped from 340 to 170 req/5h between the 2026-08-19 source document
+# and the live opencode.ai/docs/go table re-fetched 2026-09-14
+# (research.md C16, confirmed live). Its 5-hour cap now sits inside the
+# subscription's sniper tier (<=199), tighter than the semi-francotirador
+# role described in the 2026-08-19 source ("Verify BALANCED, 1-2
+# llamadas/ciclo") — that role is unchanged, just at a lower cap.
+id: qwen3.7-max
+subscription: opencode-go
+displayName: Qwen3.7 Max
+lab: alibaba
+status: current
+strengths: { oneShotReasoning: 1, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 0 }
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 170
+    requestsPerWeek: 420
+    requestsPerMonth: 840
+    monthlyUsdBucket: 30
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14

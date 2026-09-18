@@ -1,0 +1,24 @@
+id: qwen3.8-max
+subscription: opencode-go
+displayName: Qwen3.8 Max
+lab: alibaba
+status: current
+strengths: { oneShotReasoning: 3, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 0 }
+evidence:
+  oneShotReasoning: >-
+    Ranked first for single-shot reasoning: "Criterio de un disparo: Qwen3.8
+    Max > Kimi K3 ≈ Grok 4.5", and the primary model for the critical propose
+    role ("Un disparo por ciclo del mejor razonador del catálogo")
+    (data/sources/perfiles-sdd-opencode-go-only-v2.2.md, section 2.2;
+    live cap 160 req/5h, $15 bucket, https://opencode.ai/docs/go,
+    verified 2026-09-14).
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 160
+    requestsPerWeek: 400
+    requestsPerMonth: 810
+    monthlyUsdBucket: 15
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14
