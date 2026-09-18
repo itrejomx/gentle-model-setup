@@ -36,7 +36,7 @@ Out: engine (#3), other subscription catalogs (#4-#7), site, checker, deploy.
 - Test runner: Vitest through pnpm. Focused run:
   `pnpm --filter @gentle-ai/profile-data exec vitest run <pattern>`. Full: `pnpm test`.
 - Delivery: stacked-to-main PR chain, one PR per slice, base = previous slice branch.
-  Chain so far: #17 <- #18 <- #19 <- #20 <- #21 <- #22 <- #23 <- #24 <- #25 <- #26 <- #27 <- #28 <- #29.
+  Chain so far: #17 <- #18 <- #19 <- #20 <- #21 <- #22 <- #23 <- #24 <- #25 <- #26 <- #27 <- #28 <- #29 <- #30.
 - Receipt-driven development is on globally; native review runs per slice candidate with
   per-candidate consent (`--base-ref <previous branch> --committed-only`).
 - Conventional commits, no AI attribution trailers. Commits split as test / data or code / docs.
@@ -144,6 +144,7 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 - 2026-09-18: slice 12 pushed; PR #29 opened against `feat/2-bundle-hardening`, labeled `size:exception` (17 files, 901 insertions, 10 deletions; 504 added lines are tests and fixtures). The CI workflow ran on its own PR: job `validate-and-test` passed in 19s (run 35399342931). T10.9 closed; all implementation tasks of issue #2 are done.
 - 2026-09-18: close-out docs on branch `docs/2-close-out` (route: delegated direct, one writer; one leftover fix inline by the parent). TC.1 `e1b8e05`: design doc line 87 now reads `sniper ≤199, semi 200–499, workhorse 500–5000, volume >5000`; the proposal (`<200`, `<500`, `≤5000`, `>5000`) and `data/subscriptions/opencode-go.yaml` (max 199 / 499 / 5000 / null) already agreed, the design doc carried an unsupported sniper floor of 100 and claimed 5000 for two classes. TC.3 `f103914`: role summary sentence completed, each role checked against `data/phases/phases.yaml`. TC.4 `d8beb81` and `22442e4`: OpenCode 20 -> 21 in the frozen spec, design, tasks, and proposal, and in the design doc section 3.2; the same design doc line also said Claude Code 18, corrected to 19 (live `agentMap` count; the proposal already recorded the amendment from 18). Live counts re-verified: Pi 24, OpenCode 21, Claude Code 19, Codex 17. `apply-progress.md` and `exploration.md` history left as written. `pnpm test` 559/559.
 - 2026-09-18: close-out docs native review (assessed `medium`: `design.md` classed as an executable change) granted by the maintainer, reliability lens, approved and acknowledged (lineage `review-08245139e52d01c6`, authority burned). One informational finding, `R3-new-role-clauses-lack-scenario`: the amended role sentence has no spec scenario. The parent checked its premise: the three roles ARE pinned by executable assertions (`packages/data/test/phases.test.ts:216-228`, added in T9.6), so only the missing scenario in the frozen spec stands; not acted on.
+- 2026-09-18: close-out docs pushed; PR #30 opened against `feat/2-cli-ci-error-surfaces` (7 files, 19 insertions, 16 deletions); CI job `validate-and-test` passed (run 35402146447).
 
 ## Rationale for accepted judgment calls (slice 12)
 
@@ -185,4 +186,4 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 
 ## Next step
 
-On the maintainer's go-ahead push `docs/2-close-out` and open PR #30 against `feat/2-cli-ci-error-surfaces`. Maintainer decisions still open: which slice 12 review findings become a follow-up slice or issue; whether `.gga` is tracked; TC.2 (`sdd-archive`, needs explicit go-ahead).
+Only maintainer decisions remain: TC.2 (`sdd-archive`, needs explicit go-ahead); which slice 12 review findings become a follow-up slice or issue; whether `.gga` is tracked. Merge order for the chain starts at #17.
