@@ -1,0 +1,33 @@
+# Same Contributor-tier terms as muse-spark-1.2-contributor: heavily
+# discounted tokens in exchange for permission to use prompts and
+# completions to train future Meta models (live opencode.ai/docs/go
+# privacy table, verified 2026-09-14: "Model training: Yes", "Data
+# retention: Not ZDR"), limited to regions permitted by Meta's Geographic
+# Use Policy ("(limited regions)" on the live "current list of models").
+# 1.3 is not individually discussed in either narrative source document
+# (only 1.2 is), so no additional qualitative evidence is available beyond
+# what the live page and the shared Contributor-tier warning for 1.2
+# establish. `status: experimental` and `logRetentionDays: null` follow
+# the same reasoning as muse-spark-1.2-contributor.
+id: muse-spark-1.3-contributor
+subscription: opencode-go
+displayName: Muse Spark 1.3 Contributor
+lab: meta
+status: experimental
+strengths: { oneShotReasoning: 0, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 3 }
+evidence:
+  cheap: >-
+    5-hour cap of 45,300 exceeds the subscription's workhorse ceiling of
+    5,000 requests/5h, landing in the volume Budget Class tier
+    (data/subscriptions/opencode-go.yaml budgetClass.thresholds;
+    https://opencode.ai/docs/go, verified 2026-09-14).
+privacy: { trainsOnData: true, logRetentionDays: null }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 45300
+    requestsPerWeek: 113300
+    requestsPerMonth: 226600
+    monthlyUsdBucket: 60
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14

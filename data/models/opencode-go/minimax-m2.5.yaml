@@ -1,0 +1,33 @@
+# minimax-m2.5 is absent from three of the live opencode.ai/docs/go tables
+# re-verified 2026-09-14: the "current list of models" prose list, the
+# requests-per-5h/week/month caps table, and the model training/data
+# retention table. It IS present in the per-token pricing table (monthly
+# limit bucket $60) and the model-id/endpoint table, so the row itself is
+# real, just not currently offered with a request cap. `requestsPer5h`,
+# `requestsPerWeek`, and `requestsPerMonth` are therefore recorded as
+# `null` (unpublished) rather than invented, and `status: legacy` follows —
+# `validateModel`'s `checkCurrentRequiresCap` code check rejects
+# `status: current` for a model with no numeric `requestsPer5h` on any plan.
+#
+# `trainsOnData: false` is a judgment call: minimax-m2.5 has no row in the
+# live privacy table, but both of its MiniMax siblings (m3, m2.7) that DO
+# have a row are "Model training: Not used", and nothing suggests m2.5
+# differs. `logRetentionDays: null` is NOT inferred the same way — the
+# repo convention is to record an unpublished retention value as `null`
+# rather than guess a number, even when siblings share a common `0`.
+id: minimax-m2.5
+subscription: opencode-go
+displayName: MiniMax M2.5
+lab: minimax
+status: legacy
+strengths: { oneShotReasoning: 0, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 0 }
+privacy: { trainsOnData: false, logRetentionDays: null }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: null
+    requestsPerWeek: null
+    requestsPerMonth: null
+    monthlyUsdBucket: 60
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14

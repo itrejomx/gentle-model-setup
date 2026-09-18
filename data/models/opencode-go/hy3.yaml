@@ -1,0 +1,24 @@
+# The 2026-08-19 source document describes an active 8x promo on Hy3
+# ("dashboard: 34,400 con promo 8x", cap real de diseño 4,300). The live
+# opencode.ai/docs/go table re-verified 2026-09-14 shows no promo
+# annotation for Hy3 in either the pricing or the requests-per-5h/week/
+# month tables (unlike deepseek-v4.1-flash, which does carry a live
+# "4x · Ends Sep 20" annotation). That promo has therefore expired or
+# ended; this file records only the flat, unpromoted 4,300 cap and carries
+# no `multiplier`/`multiplierExpiresAt`.
+id: hy3
+subscription: opencode-go
+displayName: Hy3
+lab: tencent
+status: current
+strengths: { oneShotReasoning: 0, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 2 }
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 4300
+    requestsPerWeek: 10750
+    requestsPerMonth: 21500
+    monthlyUsdBucket: 60
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14

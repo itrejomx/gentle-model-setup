@@ -40,10 +40,33 @@ const ALIBABA_DEEPSEEK_IDS = [
   "deepseek-v4-flash-vision-exp",
 ] as const;
 
+/**
+ * Work Unit 7 (Phase 7): minimax, xiaomi, tencent, meituan, meta.
+ */
+const MINIMAX_XIAOMI_TENCENT_MEITUAN_META_IDS = [
+  "minimax-m3",
+  "minimax-m2.7",
+  "minimax-m2.5",
+  "mimo-v2.5",
+  "mimo-v2.5-pro",
+  "hy3",
+  "hy4-preview",
+  "longcat-2.0",
+  "muse-spark-1.2-contributor",
+  "muse-spark-1.3-contributor",
+] as const;
+
 const EXPECTED_IDS: readonly string[] = [
   ...MOONSHOT_ZHIPU_XAI_OPENAI_IDS,
   ...ALIBABA_DEEPSEEK_IDS,
+  ...MINIMAX_XIAOMI_TENCENT_MEITUAN_META_IDS,
 ];
+
+const EXPECTED_STATUS_COUNTS: Record<string, number> = {
+  current: 19,
+  legacy: 6,
+  experimental: 4,
+};
 
 const STRENGTH_AXES = [
   "oneShotReasoning",
@@ -90,11 +113,23 @@ function loadModel(id: string): ModelDoc {
   return readYamlFile(modelPath(id), dataRoot) as ModelDoc;
 }
 
-describe("opencode-go catalog — moonshot/zhipu/xai/openai slice", () => {
-  it("has exactly the expected model files for this slice", () => {
+describe("opencode-go catalog", () => {
+  it("has exactly the expected model files for the full catalog", () => {
     const files = readdirSync(modelsDir).filter((name) => name.endsWith(".yaml"));
     const ids = files.map((name) => name.replace(/\.yaml$/, "")).sort();
     expect(ids).toEqual([...EXPECTED_IDS].sort());
+  });
+
+  it("has 29 files split 19 current / 6 legacy / 4 experimental", () => {
+    const files = readdirSync(modelsDir).filter((name) => name.endsWith(".yaml"));
+    expect(files.length).toBe(29);
+
+    const counts: Record<string, number> = { current: 0, legacy: 0, experimental: 0 };
+    for (const id of EXPECTED_IDS) {
+      const doc = loadModel(id);
+      counts[doc.status] = (counts[doc.status] ?? 0) + 1;
+    }
+    expect(counts).toEqual(EXPECTED_STATUS_COUNTS);
   });
 
   it.each(EXPECTED_IDS)("%s validates against the model schema", (id) => {
@@ -174,5 +209,61 @@ describe("opencode-go catalog — moonshot/zhipu/xai/openai slice", () => {
     // re-tiers a model into a different Budget Class.
     expect(baseClass).toBe(promotedClass);
     expect(baseClass).toBe("volume");
+  });
+
+  // Every promo-bearing model (one carrying `plans.go.multiplier`) must keep
+  // the same derived Budget Class before and after the promo is applied.
+  // Scanning the whole catalog (rather than hard-coding one id) keeps this
+  // invariant honest as new promos are added or expire in later slices —
+  // but a data-driven scan over an empty set would trivially "pass" without
+  // proving anything, so the non-empty assertion below guards against that.
+  it("every promo-bearing model keeps its Budget Class across the promo", () => {
+    const subscription = readYamlFile(subscriptionPath, dataRoot) as SubscriptionDoc;
+    const { thresholds } = subscription.budgetClass;
+
+    const promoBearingIds = EXPECTED_IDS.filter((id) => {
+      const doc = loadModel(id);
+      return typeof doc.plans["go"]?.multiplier === "number";
+    });
+
+    // Guard against a vacuous pass: this assertion only proves the
+    // invariant if at least one promo-bearing model actually exists.
+    expect(promoBearingIds.length).toBeGreaterThan(0);
+
+    for (const id of promoBearingIds) {
+      const doc = loadModel(id);
+      const plan = doc.plans["go"];
+      const baseClass = deriveBudgetClass(plan?.requestsPer5h ?? null, thresholds);
+      const promotedRequestsPer5h = (plan?.requestsPer5h ?? 0) * (plan?.multiplier ?? 1);
+      const promotedClass = deriveBudgetClass(promotedRequestsPer5h, thresholds);
+      expect(baseClass).toBe(promotedClass);
+    }
+  });
+
+  // minimax-m2.5 has no numeric `requestsPer5h` on any plan (it is absent
+  // from the live 5h/week/month caps table); the schema alone cannot reject
+  // `status: current` for such a model, so this is enforced as a code check
+  // in `validateModel` (see `checkCurrentRequiresCap` in validate.ts).
+  it("minimax-m2.5 has no numeric requestsPer5h and is not status: current", () => {
+    const doc = loadModel("minimax-m2.5");
+    for (const plan of Object.values(doc.plans)) {
+      expect(plan.requestsPer5h).toBeNull();
+    }
+    expect(doc.status).not.toBe("current");
+
+    // The code check itself: a model with only null caps must be rejected
+    // when marked current, naming the file and the offending field.
+    const fabricatedCurrentDoc = { ...doc, status: "current" };
+    const errors = validateModel(fabricatedCurrentDoc, modelPath("minimax-m2.5"));
+    expect(errors).not.toEqual([]);
+    expect(errors.some((error) => error.field === "status")).toBe(true);
+  });
+
+  it("muse-spark-1.2-contributor and muse-spark-1.3-contributor train on data with unpublished retention", () => {
+    for (const id of ["muse-spark-1.2-contributor", "muse-spark-1.3-contributor"]) {
+      const doc = loadModel(id);
+      expect(doc.privacy.trainsOnData).toBe(true);
+      expect(doc.privacy.logRetentionDays).toBeNull();
+    }
   });
 });
