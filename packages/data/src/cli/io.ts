@@ -96,3 +96,20 @@ export async function runGuarded(
     return EXIT_USAGE;
   }
 }
+
+/**
+ * Wires `process` to a CLI core: the only place in this package that
+ * touches `process.argv`, `process.stdout`/`stderr`, or `process.exitCode`,
+ * shared by `bin/validate.ts` and `bin/build.ts` so each entry file is a
+ * one-line, always-run call (AGENTS.md: "the entrypoint only wires
+ * `process` to it"). Unlike the deleted `import.meta.url` guard this
+ * replaces, it has no condition to get wrong (issue #33).
+ */
+export function runEntry(run: (args: string[], streams: CliStreams) => Promise<number>): void {
+  void runGuarded(run, process.argv.slice(2), {
+    stdout: process.stdout,
+    stderr: process.stderr,
+  }).then((code) => {
+    process.exitCode = code;
+  });
+}

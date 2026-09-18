@@ -1,14 +1,5 @@
-import { pathToFileURL } from "node:url";
 import { validateData } from "../load-data.js";
-import {
-  checkRootDir,
-  DEFAULT_DATA_ROOT,
-  EXIT_INVALID,
-  EXIT_OK,
-  EXIT_USAGE,
-  runGuarded,
-  writeDataErrors,
-} from "./io.js";
+import { checkRootDir, DEFAULT_DATA_ROOT, EXIT_INVALID, EXIT_OK, EXIT_USAGE, writeDataErrors } from "./io.js";
 import type { CliStreams } from "./io.js";
 
 /**
@@ -40,15 +31,4 @@ export async function runValidateCli(args: string[], streams: CliStreams): Promi
 
   writeDataErrors(streams, errors);
   return EXIT_INVALID;
-}
-
-// Thin entrypoint: only runs when this file is executed directly (by
-// `tsx`), never when a test imports `runValidateCli`.
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  void runGuarded(runValidateCli, process.argv.slice(2), {
-    stdout: process.stdout,
-    stderr: process.stderr,
-  }).then((code) => {
-    process.exitCode = code;
-  });
 }

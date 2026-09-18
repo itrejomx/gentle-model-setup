@@ -1,6 +1,5 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { pathToFileURL } from "node:url";
 import { buildBundle } from "../bundle.js";
 import { DataValidationError } from "../errors.js";
 import { loadData } from "../load-data.js";
@@ -11,7 +10,6 @@ import {
   EXIT_OK,
   EXIT_USAGE,
   errorMessage,
-  runGuarded,
   writeDataErrors,
 } from "./io.js";
 import type { CliStreams } from "./io.js";
@@ -72,15 +70,4 @@ export async function runBuildCli(args: string[], streams: CliStreams): Promise<
 
   streams.stdout.write(`${bundle.hash}\n`);
   return EXIT_OK;
-}
-
-// Thin entrypoint: only runs when this file is executed directly (by
-// `tsx`), never when a test imports `runBuildCli`.
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  void runGuarded(runBuildCli, process.argv.slice(2), {
-    stdout: process.stdout,
-    stderr: process.stderr,
-  }).then((code) => {
-    process.exitCode = code;
-  });
 }
