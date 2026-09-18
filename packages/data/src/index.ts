@@ -1,7 +1,12 @@
 export const VERSION = "0.1.0";
 
 export type { DataError } from "./errors.js";
-export { BundleHashMismatchError, DataValidationError } from "./errors.js";
+export {
+  BundleHashMismatchError,
+  BundleParseError,
+  BundleShapeError,
+  DataValidationError,
+} from "./errors.js";
 export type {
   Bundle,
   BundleModelPlan,

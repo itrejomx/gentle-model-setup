@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   BundleHashMismatchError,
+  BundleParseError,
+  BundleShapeError,
   buildBundle,
   DataValidationError,
   loadBundle,
@@ -138,5 +140,82 @@ describe("buildBundle rejects an integrity failure instead of building a degrade
     ];
 
     expect(() => buildBundle(dataSet)).toThrow(DataValidationError);
+  });
+});
+
+/**
+ * loadBundle shape validation (T11.4): a malformed JSON file, a bundle
+ * missing `payload`, one missing `hash`, and one where either field has
+ * the wrong type all raise a typed bundle error, each distinct from
+ * BundleHashMismatchError (which means the shape was fine but the hash
+ * itself did not match).
+ */
+describe("loadBundle shape validation (T11.4)", () => {
+  let dir: string;
+  let file: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "gentle-ai-bundle-shape-"));
+    file = join(dir, "data.json");
+  });
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("rejects a file that is not valid JSON", async () => {
+    await writeFile(file, "{ not valid json", "utf8");
+
+    await expect(loadBundle(file)).rejects.toThrow(BundleParseError);
+  });
+
+  it("rejects a bundle missing the payload field", async () => {
+    await writeFile(file, JSON.stringify({ hash: "deadbeef" }), "utf8");
+
+    await expect(loadBundle(file)).rejects.toThrow(BundleShapeError);
+  });
+
+  it("rejects a bundle missing the hash field", async () => {
+    await writeFile(
+      file,
+      JSON.stringify({
+        payload: { subscriptions: [], models: [], phases: [], overrides: [], runtimes: [] },
+      }),
+      "utf8",
+    );
+
+    await expect(loadBundle(file)).rejects.toThrow(BundleShapeError);
+  });
+
+  it("rejects a bundle whose hash field has the wrong type", async () => {
+    await writeFile(
+      file,
+      JSON.stringify({
+        hash: 12345,
+        payload: { subscriptions: [], models: [], phases: [], overrides: [], runtimes: [] },
+      }),
+      "utf8",
+    );
+
+    await expect(loadBundle(file)).rejects.toThrow(BundleShapeError);
+  });
+
+  it("rejects a bundle whose payload field has the wrong type", async () => {
+    await writeFile(file, JSON.stringify({ hash: "deadbeef", payload: "not-an-object" }), "utf8");
+
+    await expect(loadBundle(file)).rejects.toThrow(BundleShapeError);
+  });
+
+  it("still reports a hash mismatch, not a shape error, once the shape itself is valid", async () => {
+    await writeFile(
+      file,
+      JSON.stringify({
+        hash: "not-the-real-hash",
+        payload: { subscriptions: [], models: [], phases: [], overrides: [], runtimes: [] },
+      }),
+      "utf8",
+    );
+
+    await expect(loadBundle(file)).rejects.toThrow(BundleHashMismatchError);
   });
 });
