@@ -1,0 +1,37 @@
+# grok-4.5 is absent from the live opencode.ai/docs/go table re-fetched
+# 2026-09-14 (confirmed: no "grok-4.5" occurrence anywhere on the page,
+# while grok-4.6 is present). No changelog or rename statement was found
+# (research.md C18/contradictions), so this row is kept as a separate
+# legacy entry rather than merged into grok-4.6. Its 5-hour cap comes from
+# the 2026-08-19 source document; weekly/monthly caps were never published
+# there, so they are recorded as `null` (unpublished, per the schema's
+# nullable plan fields) instead of being invented.
+#
+# monthlyUsdBucket is not published for this row anywhere (it predates the
+# current $15/$30/$60 bucket table). It is inferred as $15 because every
+# other francotirador-tier model in the live table (kimi-k3, glm-5.3) that
+# shares grok-4.5's sub-200 cap magnitude is bucketed at $15; this is a
+# judgment call, not a sourced value — see apply-progress.md Work Unit 5.
+id: grok-4.5
+subscription: opencode-go
+displayName: Grok 4.5
+lab: xai
+status: legacy
+strengths: { oneShotReasoning: 2, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 0 }
+evidence:
+  oneShotReasoning: >-
+    Tied for the second-best single-shot reasoner in the catalog:
+    "Criterio de un disparo: Qwen3.8 Max > Kimi K3 ≈ Grok 4.5"
+    (data/sources/perfiles-sdd-opencode-go-only-v2.2.md, section 2.2;
+    5-hour cap 120 per the 2026-08-19 source document — this model is
+    absent from the 2026-09-14 live table, see research.md C18).
+privacy: { trainsOnData: false, logRetentionDays: 30 }  # 30-day log retention per the 2026-08-19 source (section 2, privacy note)
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 120
+    requestsPerWeek: null
+    requestsPerMonth: null
+    monthlyUsdBucket: 15
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14

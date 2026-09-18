@@ -1,0 +1,16 @@
+id: grok-4.6
+subscription: opencode-go
+displayName: Grok 4.6
+lab: xai
+status: current
+strengths: { oneShotReasoning: 1, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 0 }
+privacy: { trainsOnData: false, logRetentionDays: 30 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 169
+    requestsPerWeek: 423
+    requestsPerMonth: 845
+    monthlyUsdBucket: 15
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14

@@ -1,0 +1,24 @@
+id: glm-5.3-flash
+subscription: opencode-go
+displayName: GLM-5.3-Flash
+lab: zhipu
+status: current
+strengths: { oneShotReasoning: 1, sustainedReasoning: 1, codingTools: 1, longContext: 1, multimodal: 0, cheap: 3 }
+evidence:
+  cheap: >-
+    Live cap of 6,320 req/5h exceeds the opencode-go subscription's
+    workhorse ceiling (max 5,000), landing in the volume Budget Class
+    tier (data/subscriptions/opencode-go.yaml budgetClass.thresholds;
+    https://opencode.ai/docs/go, verified 2026-09-14). New model, not
+    present in either narrative source document, so no qualitative role
+    ranking is available for the other axes.
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 6320
+    requestsPerWeek: 15790
+    requestsPerMonth: 31580
+    monthlyUsdBucket: 60
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14

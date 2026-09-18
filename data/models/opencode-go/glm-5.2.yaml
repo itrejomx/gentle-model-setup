@@ -1,0 +1,20 @@
+id: glm-5.2
+subscription: opencode-go
+displayName: GLM-5.2
+lab: zhipu
+status: current
+strengths: { oneShotReasoning: 2, sustainedReasoning: 2, codingTools: 3, longContext: 2, multimodal: 0, cheap: 2 }
+evidence:
+  codingTools: >-
+    Highest 5-hour cap among $60-bucket coding models in the Go catalog
+    (https://opencode.ai/docs/go, verified 2026-09-14).
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [low, medium, high]
+plans:
+  go:
+    requestsPer5h: 880
+    requestsPerWeek: 2150
+    requestsPerMonth: 4300
+    monthlyUsdBucket: 60
+    source: https://opencode.ai/docs/go
+    verifiedAt: 2026-09-14
