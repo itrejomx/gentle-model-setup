@@ -1,0 +1,18 @@
+id: fixture-model
+subscription: fixture-sub
+displayName: Fixture Model
+lab: moonshot
+status: current
+strengths: { oneShotReasoning: 1, sustainedReasoning: 1, codingTools: 3, longContext: 1, multimodal: 0, cheap: 1 }
+evidence:
+  codingTools: "   "
+privacy: { trainsOnData: false, logRetentionDays: 0 }
+effortVariants: [medium]
+plans:
+  go:
+    requestsPer5h: 500
+    requestsPerWeek: 2000
+    requestsPerMonth: 8000
+    monthlyUsdBucket: 20
+    source: https://example.com/catalog
+    verifiedAt: 2026-09-14

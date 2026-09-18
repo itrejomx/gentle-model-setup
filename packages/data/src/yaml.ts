@@ -69,7 +69,18 @@ export function resolveContainedPath(filePath: string, rootDir: string): string 
  */
 export function readYamlFile(filePath: string, rootDir: string): unknown {
   const containedPath = resolveContainedPath(filePath, rootDir);
-  const raw = readFileSync(containedPath, "utf8");
+
+  let raw: string;
+  try {
+    raw = readFileSync(containedPath, "utf8");
+  } catch (cause) {
+    throw new YamlLoadError({
+      file: filePath,
+      field: "<path>",
+      message: `unable to read file: ${(cause as Error).message}`,
+    });
+  }
+
   try {
     return parseYaml(raw);
   } catch (cause) {
