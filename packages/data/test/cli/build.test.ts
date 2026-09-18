@@ -117,6 +117,42 @@ describe("runBuildCli exit codes", () => {
     expect(existsSync(outputPath)).toBe(false);
   });
 
+  // Issue #32: on `main`, this same fixture made `build` exit 2 with a bare
+  // `Error` message from `deriveBudgetClass`, naming no file and no field.
+  it("exits 1 and writes nothing, naming the file and budgetClass.thresholds, for a malformed threshold list", async () => {
+    const rootDir = makeTempRoot();
+    writeValidPhasesFixture(rootDir);
+    mkdirSync(join(rootDir, "subscriptions"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "subscriptions", "bad-thresholds.yaml"),
+      [
+        "id: bad-sub",
+        "displayName: Bad Subscription",
+        "providerPrefix: bad",
+        "billingModel: capped",
+        "budgetClass:",
+        "  derivedFrom: requestsPer5h",
+        "  thresholds:",
+        "    - { class: volume, max: 9000 }",
+        "plans:",
+        "  - { id: go, displayName: Go, priceUsdPerMonth: 10 }",
+        "catalogSourceUrl: https://example.com/catalog",
+        "verifiedAt: 2026-09-14",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+    const outputPath = join(rootDir, "build", "data.json");
+
+    const { streams, err } = captureStreams();
+    const code = await runBuildCli([rootDir, outputPath], streams);
+    const stderr = err.join("");
+
+    expect(code).toBe(1);
+    expect(stderr).toContain("bad-thresholds.yaml:budgetClass.thresholds:");
+    expect(existsSync(outputPath)).toBe(false);
+  });
+
   it("exits 2 and writes nothing when the data root does not exist", async () => {
     const rootDir = makeTempRoot();
     const missingRoot = join(rootDir, "does-not-exist");
