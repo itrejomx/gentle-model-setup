@@ -84,7 +84,7 @@ Budget class is abstract. Each subscription derives it its own way:
 
 | Subscription | Derivation |
 |---|---|
-| OpenCode Go | requests per 5 hours: sniper 100–199, semi 200–499, workhorse 500–5000, volume 5000+ |
+| OpenCode Go | requests per 5 hours: sniper ≤199, semi 200–499, workhorse 500–5000, volume >5000 |
 | OpenAI (ChatGPT via Codex) | plan tier and model family position (Sol / Terra / Luna) |
 | OpenRouter | price per million tokens, bucketed |
 | Mistral, Kimi coding plan | plan caps where published, price otherwise |
