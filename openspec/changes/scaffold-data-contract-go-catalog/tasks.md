@@ -35,11 +35,11 @@ Chain strategy: stacked-to-main
 
 ## Phase 1: Workspace Scaffold (Work Unit 1, PR 1)
 
-- [ ] 1.1 Create root `package.json` (private, `packageManager: pnpm@10`, scripts `validate`/`build`/`test`/`typecheck` via `pnpm -r`), `pnpm-workspace.yaml` (globs `packages/*`, `apps/*`), `tsconfig.base.json` (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`, `module: nodenext`, `target: es2023`), `.nvmrc` (22), `.gitignore` (`node_modules`, `dist`, `build/`).
-- [ ] 1.2 Create `packages/data/package.json` (`@gentle-ai/profile-data`, `"type": "module"`, deps `ajv`/`ajv-formats`/`yaml`, dev `vitest`/`fast-check`/`tsx`/`typescript`), `packages/data/tsconfig.json` (extends base), `packages/data/vitest.config.ts` (node env, `test/**/*.test.ts`).
-- [ ] 1.3 RED: write `packages/data/test/index.test.ts` asserting `packages/data/src/index.ts` exports a `VERSION` string — fails, module does not exist.
-- [ ] 1.4 GREEN: create `packages/data/src/index.ts` exporting `VERSION` to pass 1.3; run `pnpm install`.
-- [ ] 1.5 Verify: `pnpm -r typecheck && pnpm test` green from a clean install; confirm the PR diff contains only scaffold files.
+- [x] 1.1 Create root `package.json` (private, `packageManager: pnpm@10`, scripts `validate`/`build`/`test`/`typecheck` via `pnpm -r`), `pnpm-workspace.yaml` (globs `packages/*`, `apps/*`), `tsconfig.base.json` (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`, `module: nodenext`, `target: es2023`), `.nvmrc` (22), `.gitignore` (`node_modules`, `dist`, `build/`).
+- [x] 1.2 Create `packages/data/package.json` (`@gentle-ai/profile-data`, `"type": "module"`, deps `ajv`/`ajv-formats`/`yaml`, dev `vitest`/`fast-check`/`tsx`/`typescript`), `packages/data/tsconfig.json` (extends base), `packages/data/vitest.config.ts` (node env, `test/**/*.test.ts`).
+- [x] 1.3 RED: write `packages/data/test/index.test.ts` asserting `packages/data/src/index.ts` exports a `VERSION` string — fails, module does not exist.
+- [x] 1.4 GREEN: create `packages/data/src/index.ts` exporting `VERSION` to pass 1.3; run `pnpm install`.
+- [x] 1.5 Verify: `pnpm -r typecheck && pnpm test` green from a clean install; confirm the PR diff contains only scaffold files.
 
 ## Phase 2: Subscription+Model Schemas, Loader Core (Work Unit 2, PR 2)
 

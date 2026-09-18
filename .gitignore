@@ -1,3 +1,8 @@
 # Local AI runtime state
 .atl/
 .codegraph/
+
+# Node / pnpm
+node_modules/
+dist/
+build/
