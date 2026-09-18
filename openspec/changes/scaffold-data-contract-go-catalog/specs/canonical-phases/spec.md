@@ -48,8 +48,9 @@ Every phase entry MUST declare `callPattern` (`one-shot` | `loop`), a
 
 Role assignment MUST follow the design spec's phase table: `sdd-apply` and
 `sdd-remediate` are `implementer`; `sdd-verify` is `verifier`; `jd-judge-a`
-and `jd-judge-b` are `judge-a` and `judge-b`; every other phase is `neutral`
-unless it is a `review-*` verifier.
+and `jd-judge-b` are `judge-a` and `judge-b`; `jd-fix-agent` and
+`gentle-ai-worker` are `implementer`; `gentle-ai-verify` is `verifier`; every
+other phase is `neutral` unless it is a `review-*` verifier.
 
 #### Scenario: sdd-verify is a verifier
 

@@ -63,7 +63,7 @@ Pi, OpenCode, Claude Code, and Codex installs): 27 rows.
 | Review | `review-risk`, `review-readability`, `review-reliability`, `review-resilience`, `review-refuter`, `review-validator` | verifiers |
 | Workers | `gentle-ai-explore`, `gentle-ai-verify`, `gentle-ai-worker` | neutral, verifier, implementer |
 
-No single runtime has all 27. Pi has 24, OpenCode 20, Claude Code 18, Codex
+No single runtime has all 27. Pi has 24, OpenCode 21, Claude Code 19, Codex
 17, and Pi names one differently (`sdd-proposal`). Runtime presence and
 naming live in per-runtime mappings (section 4), never in the engine.
 
@@ -84,7 +84,7 @@ Budget class is abstract. Each subscription derives it its own way:
 
 | Subscription | Derivation |
 |---|---|
-| OpenCode Go | requests per 5 hours: sniper 100–199, semi 200–499, workhorse 500–5000, volume 5000+ |
+| OpenCode Go | requests per 5 hours: sniper ≤199, semi 200–499, workhorse 500–5000, volume >5000 |
 | OpenAI (ChatGPT via Codex) | plan tier and model family position (Sol / Terra / Luna) |
 | OpenRouter | price per million tokens, bucketed |
 | Mistral, Kimi coding plan | plan caps where published, price otherwise |

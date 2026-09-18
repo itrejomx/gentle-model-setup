@@ -100,8 +100,8 @@ Chain strategy: stacked-to-main
 ## Phase 9: Runtime Mappings (Work Unit 9, PR 9)
 
 - [ ] 9.1 Read live installs (read-only) at `~/.pi/agent/agents/`, `~/.config/opencode/opencode.json`, `~/.claude/agents/`, `~/.codex/agents/` to fill each `agentMap`.
-- [ ] 9.2 RED: `packages/data/test/runtime-mappings.test.ts` asserting `agentMap` entry counts Pi 24, OpenCode 20, Claude Code 19, Codex 17; every `agentMap` value resolves to a phase id in `phases.yaml`; every `prefixMap` key is a known provider prefix.
-- [ ] 9.3 GREEN: create `data/runtimes/pi.yaml` (24 entries; `sdd-proposal` names the Pi phase mapped to canonical `sdd-propose`; `prefixMap` maps `openai` → `openai-codex`), `data/runtimes/opencode.yaml` (20), `data/runtimes/claude-code.yaml` (19), `data/runtimes/codex.yaml` (17).
+- [ ] 9.2 RED: `packages/data/test/runtime-mappings.test.ts` asserting `agentMap` entry counts Pi 24, OpenCode 21, Claude Code 19, Codex 17; every `agentMap` value resolves to a phase id in `phases.yaml`; every `prefixMap` key is a known provider prefix.
+- [ ] 9.3 GREEN: create `data/runtimes/pi.yaml` (24 entries; `sdd-proposal` names the Pi phase mapped to canonical `sdd-propose`; `prefixMap` maps `openai` → `openai-codex`), `data/runtimes/opencode.yaml` (21), `data/runtimes/claude-code.yaml` (19), `data/runtimes/codex.yaml` (17).
 - [ ] 9.4 Verify: `pnpm --filter @gentle-ai/profile-data test -- runtime-mappings`.
 
 ## Phase 10: Bundle + CLI + CI (Work Unit 10, PR 10)

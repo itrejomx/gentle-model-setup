@@ -27,7 +27,7 @@ The repo is docs-only. Engine (#3), site, and checker all need a validated YAML 
 - `data-loader`: YAML load, Ajv errors naming file and field, Strength-3 check naming the axis, Budget Class per Plan
 - `opencode-go-catalog`: subscription thresholds, 29 models, source fixtures
 - `canonical-phases`: 27 rows with call pattern, weights, role
-- `runtime-mappings`: Pi 24, OpenCode 20, Claude Code 19, Codex 17
+- `runtime-mappings`: Pi 24, OpenCode 21, Claude Code 19, Codex 17
 - `data-bundle`: canonical JSON, SHA-256, `loadBundle()` round-trip
 - `ci-validation`: install, validate, test, build
 
@@ -83,6 +83,6 @@ Each slice is one stacked PR; revert it. Data slices revert file-by-file without
 - [ ] Go subscription exposes `capped`, thresholds, Plan `go`, catalog source
 - [ ] Every Go model has Lab, six Strengths, privacy, status, `plans.go` evidence with `verifiedAt`
 - [ ] `phases.yaml` has exactly 27 rows
-- [ ] Runtime mappings: Pi 24, OpenCode 20, Claude Code 19 (amended from 18; `sdd-research` is installed), Codex 17
+- [ ] Runtime mappings: Pi 24, OpenCode 21, Claude Code 19 (amended from 18; `sdd-research` is installed), Codex 17
 - [ ] `pnpm build` emits `data.json` with a hash; `loadBundle()` reads it back; identical data yields identical hash
 - [ ] CI runs on pull requests
