@@ -58,6 +58,92 @@ describe("validateSubscription", () => {
       ).toBe(true);
     }
   });
+
+  // Issue #32: the threshold rules `deriveBudgetClass` depends on (strictly
+  // ascending `max`, a trailing `null` max) were only enforced lazily inside
+  // `deriveBudgetClass`, so `validateData` never caught a broken list.
+  it("rejects thresholds whose last entry's max is not null, naming the field", () => {
+    const doc = loadFixture(
+      "invalid/subscription-threshold-last-not-null/subscription.yaml",
+    );
+    const expected = loadExpectedErrors(
+      "invalid/subscription-threshold-last-not-null/expected-errors.json",
+    );
+    const errors = validateSubscription(doc, "subscription.yaml");
+
+    expect(errors.every((error) => error.file === "subscription.yaml")).toBe(
+      true,
+    );
+    for (const expectation of expected) {
+      expect(
+        errors.some(
+          (error) =>
+            error.field === expectation.field &&
+            error.message.includes(expectation.message),
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("rejects thresholds whose max values are not strictly ascending, naming the field", () => {
+    const doc = loadFixture(
+      "invalid/subscription-threshold-not-ascending/subscription.yaml",
+    );
+    const expected = loadExpectedErrors(
+      "invalid/subscription-threshold-not-ascending/expected-errors.json",
+    );
+    const errors = validateSubscription(doc, "subscription.yaml");
+
+    expect(errors.every((error) => error.file === "subscription.yaml")).toBe(
+      true,
+    );
+    for (const expectation of expected) {
+      expect(
+        errors.some(
+          (error) =>
+            error.field === expectation.field &&
+            error.message.includes(expectation.message),
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("rejects a null max before the last entry, naming the field", () => {
+    const doc = loadFixture(
+      "invalid/subscription-threshold-null-before-last/subscription.yaml",
+    );
+    const expected = loadExpectedErrors(
+      "invalid/subscription-threshold-null-before-last/expected-errors.json",
+    );
+    const errors = validateSubscription(doc, "subscription.yaml");
+
+    expect(errors.every((error) => error.file === "subscription.yaml")).toBe(
+      true,
+    );
+    for (const expectation of expected) {
+      expect(
+        errors.some(
+          (error) =>
+            error.field === expectation.field &&
+            error.message.includes(expectation.message),
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("rejects an empty thresholds list, naming the field", () => {
+    const doc = loadFixture(
+      "invalid/subscription-threshold-empty/subscription.yaml",
+    );
+    const errors = validateSubscription(doc, "subscription.yaml");
+
+    expect(errors.every((error) => error.file === "subscription.yaml")).toBe(
+      true,
+    );
+    expect(
+      errors.some((error) => error.field === "budgetClass.thresholds"),
+    ).toBe(true);
+  });
 });
 
 describe("validateModel", () => {

@@ -1,0 +1,3 @@
+[
+  { "field": "budgetClass.thresholds", "message": "only the last entry may have a null max" }
+]

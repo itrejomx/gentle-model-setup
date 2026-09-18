@@ -1,0 +1,11 @@
+id: fixture-sub
+displayName: Fixture Subscription
+providerPrefix: fixture
+billingModel: capped
+budgetClass:
+  derivedFrom: requestsPer5h
+  thresholds: []
+plans:
+  - { id: go, displayName: Go, priceUsdPerMonth: 10 }
+catalogSourceUrl: https://example.com/catalog
+verifiedAt: 2026-09-14

@@ -151,6 +151,41 @@ describe("runValidateCli exit codes", () => {
     expect(err.join("")).toMatch(/not a directory/);
   });
 
+  // Issue #32: a Subscription whose threshold list is malformed (here, the
+  // last entry's max is not null) is a data error at the door, not a lazy
+  // throw the first time `deriveBudgetClass` reaches it.
+  it("exits 1, naming the file and budgetClass.thresholds, for a malformed threshold list", async () => {
+    const rootDir = makeTempRoot();
+    writeValidPhasesFixture(rootDir);
+    mkdirSync(join(rootDir, "subscriptions"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "subscriptions", "bad-thresholds.yaml"),
+      [
+        "id: bad-sub",
+        "displayName: Bad Subscription",
+        "providerPrefix: bad",
+        "billingModel: capped",
+        "budgetClass:",
+        "  derivedFrom: requestsPer5h",
+        "  thresholds:",
+        "    - { class: volume, max: 9000 }",
+        "plans:",
+        "  - { id: go, displayName: Go, priceUsdPerMonth: 10 }",
+        "catalogSourceUrl: https://example.com/catalog",
+        "verifiedAt: 2026-09-14",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const { streams, err } = captureStreams();
+    const code = await runValidateCli([rootDir], streams);
+    const stderr = err.join("");
+
+    expect(code).toBe(1);
+    expect(stderr).toContain("bad-thresholds.yaml:budgetClass.thresholds:");
+  });
+
   it("exits 2 for more than one positional argument (usage error)", async () => {
     const { streams, err } = captureStreams();
     const code = await runValidateCli(["a", "b"], streams);

@@ -189,4 +189,4 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 
 ## Next step
 
-Maintainer: merge PR #31; close issue #2; decide which slice 12 review findings become a follow-up slice or issue; decide whether `.gga` is tracked.
+None: issue #2 is closed. 2026-09-18: PR #31 merged (`b29a59f`) and issue #2 closed with a comment that records the OpenCode 21 deviation and that only `packages/data` exists so far. The review findings became #32 (threshold validation), #33 (entrypoint guard fails open), #34 (atomic bundle write), and #35 (loader, CLI, and CI hardening). `.gga` tracking is still the maintainer's call.
