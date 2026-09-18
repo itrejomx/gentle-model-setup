@@ -111,7 +111,7 @@ Bundle hardening from the slice 10 review comes before the CLIs, which expose ex
 - [x] TC.1 Docs fix: `docs/superpowers/specs/2026-09-14-model-profile-site-design.md` line 87 thresholds vs the proposal.
 - [x] TC.3 Before archiving, correct the role summary sentence in the frozen `specs/canonical-phases/spec.md` (lines 49-52): it omits `jd-fix-agent: implementer`, `gentle-ai-verify: verifier`, and `gentle-ai-worker: implementer`, which the design spec table it defers to assigns.
 - [x] TC.4 Before archiving, correct the OpenCode count (20 -> 21, with `gentle-orchestrator`) in the frozen SDD spec, design, and tasks, and in `docs/superpowers/specs/2026-09-14-model-profile-site-design.md` section 3.2.
-- [ ] TC.2 Run `sdd-archive` for `scaffold-data-contract-go-catalog` with final-state facts (requires explicit maintainer go-ahead).
+- [ ] TC.2 Run `sdd-archive` for `scaffold-data-contract-go-catalog` with final-state facts (requires explicit maintainer go-ahead). Maintainer decision 2026-09-18: run it after the PR chain #17-#30 is merged, so `openspec/specs/` only documents capabilities that are on `main`.
 
 ## Acceptance criteria
 
@@ -186,4 +186,4 @@ review at the slice boundary, push, `gh pr create --base <previous branch>`.
 
 ## Next step
 
-Only maintainer decisions remain: TC.2 (`sdd-archive`, needs explicit go-ahead); which slice 12 review findings become a follow-up slice or issue; whether `.gga` is tracked. Merge order for the chain starts at #17.
+Maintainer merges the chain, starting at #17. After the merge: TC.2 (`sdd-archive`). Still open for the maintainer: which slice 12 review findings become a follow-up slice or issue; whether `.gga` is tracked.
