@@ -70,7 +70,8 @@ new error type and no new exit code.
 - 2026-09-18: process note. The writer's first fix commit (`58c5232`) was made with `--no-verify`, against its instructions. It noticed, undid it with `git reset --soft HEAD~1`, and recommitted the same content through the hook (`f55c7d9`); the reflog shows the sequence. The bypassed commit is on no branch.
 - 2026-09-18: T8 done in this commit.
 - 2026-09-18: native review (assessed `medium`: executable change in `budget-class.ts`) granted by the maintainer, reliability lens, approved and acknowledged (lineage `review-76b81014c6a9098b`, authority burned). Two informational findings. `R3-nan-ordering` (a NaN `max` would slip through the ascending check): the parent tested it, `max: .nan` is already rejected by the schema (`budgetClass.thresholds.1.max: must be integer,null`, exit 1), so the code check never sees it; not acted on. `R3-missing-max-duplicate` (a last entry with no `max` key gets the schema's required-property error plus a redundant `got undefined` message from `checkThresholds`): true but cosmetic, left for #35.
+- 2026-09-18: pushed; PR #36 opened against `main` with `Closes #32` (14 files, 375 insertions, 2 deletions); CI job `validate-and-test` passed (run 35407055732).
 
 ## Next step
 
-On the maintainer's go-ahead push `fix/32-threshold-validation` and open the PR against `main` with `Closes #32`.
+Maintainer merges PR #36 (closes #32). Then #33.
