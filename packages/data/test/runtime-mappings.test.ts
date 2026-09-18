@@ -1,7 +1,9 @@
+import { readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { readYamlFile, validateRuntime } from "../src/index.js";
+import { checkCrossFileIntegrity, readYamlFile, validateRuntime } from "../src/index.js";
+import type { DataSet, PhaseRecord, SubscriptionRecord } from "../src/types.js";
 
 /**
  * Expected `agentMap` entry counts, verified 2026-09-17 against the live
@@ -22,73 +24,6 @@ const EXPECTED_AGENT_MAP_COUNTS: Record<string, number> = {
   codex: 17,
 };
 
-/**
- * The 27 canonical phase ids, duplicated from phases.test.ts's own
- * derivation (same source: the design spec table, section 3.2). Kept here
- * rather than imported so this file can assert "every agentMap value is one
- * of these ids" without coupling to the other test module's internals.
- */
-const ORCHESTRATION_IDS = ["gentle-orchestrator"] as const;
-
-const SDD_IDS = [
-  "sdd-init",
-  "sdd-explore",
-  "sdd-research",
-  "sdd-propose",
-  "sdd-spec",
-  "sdd-design",
-  "sdd-tasks",
-  "sdd-apply",
-  "sdd-remediate",
-  "sdd-verify",
-  "sdd-archive",
-  "sdd-onboard",
-  "sdd-status",
-  "sdd-sync",
-] as const;
-
-const JUDGMENT_DAY_IDS = ["jd-judge-a", "jd-judge-b", "jd-fix-agent"] as const;
-
-const REVIEW_IDS = [
-  "review-risk",
-  "review-readability",
-  "review-reliability",
-  "review-resilience",
-  "review-refuter",
-  "review-validator",
-] as const;
-
-const WORKER_IDS = [
-  "gentle-ai-explore",
-  "gentle-ai-verify",
-  "gentle-ai-worker",
-] as const;
-
-const CANONICAL_PHASE_IDS: readonly string[] = [
-  ...ORCHESTRATION_IDS,
-  ...SDD_IDS,
-  ...JUDGMENT_DAY_IDS,
-  ...REVIEW_IDS,
-  ...WORKER_IDS,
-];
-
-/**
- * "Known" subscription provider prefixes a runtime's `prefixMap` may key on.
- *
- * - `opencode-go` is `data/subscriptions/opencode-go.yaml`'s `providerPrefix`
- *   field — the only subscription committed under issue #2's scope.
- * - `openai` is not backed by any committed subscription file yet (the
- *   OpenAI/ChatGPT-via-Codex subscription is PRD stories #4-#7, out of scope
- *   here); it is the frozen design spec's own worked example of the concept
- *   (design.md section 4: "a prefix map (subscription provider prefix ->
- *   runtime prefix, so `openai/` becomes `openai-codex/` on Pi)"), and slice
- *   9's task instructions require Pi's `prefixMap` to declare exactly this
- *   translation. Treating it as "known" here documents that judgment call
- *   instead of hiding it; a future subscription slice should confirm or
- *   replace it once `data/subscriptions/openai.yaml` (or equivalent) exists.
- */
-const KNOWN_PROVIDER_PREFIXES = ["opencode-go", "openai"] as const;
-
 interface RuntimeDoc {
   id: string;
   displayName: string;
@@ -99,6 +34,8 @@ interface RuntimeDoc {
 const here = dirname(fileURLToPath(import.meta.url));
 const dataRoot = resolve(here, "../../../data");
 const runtimesDir = join(dataRoot, "runtimes");
+const phasesPath = join(dataRoot, "phases/phases.yaml");
+const subscriptionsDir = join(dataRoot, "subscriptions");
 
 function runtimePath(id: string): string {
   return join(runtimesDir, `${id}.yaml`);
@@ -106,6 +43,25 @@ function runtimePath(id: string): string {
 
 function loadRuntime(id: string): RuntimeDoc {
   return readYamlFile(runtimePath(id), dataRoot) as RuntimeDoc;
+}
+
+/** Loads the 27 canonical phase ids straight from `data/phases/phases.yaml`
+ * (T10.10) — never from a list copy-pasted into this test file. */
+function loadPhaseRecords(): PhaseRecord[] {
+  const doc = readYamlFile(phasesPath, dataRoot) as { phases: PhaseRecord[] };
+  return doc.phases;
+}
+
+/** Loads every committed subscription's `providerPrefix` (T10.10) — never
+ * from a hardcoded array. `openai` has no backing subscription file yet
+ * (PRD stories #4-#7, out of scope for issue #2); `checkCrossFileIntegrity`
+ * keeps it working only as an explicit, commented, example-only exception
+ * for the design spec's worked example (design.md section 4: `openai` ->
+ * `openai-codex` on Pi). */
+function loadSubscriptionRecords(): SubscriptionRecord[] {
+  return readdirSync(subscriptionsDir)
+    .filter((name) => name.endsWith(".yaml"))
+    .map((name) => readYamlFile(join(subscriptionsDir, name), dataRoot) as SubscriptionRecord);
 }
 
 const RUNTIME_IDS = Object.keys(EXPECTED_AGENT_MAP_COUNTS);
@@ -129,35 +85,44 @@ describe("runtime mappings", () => {
     });
   }
 
-  it.each(RUNTIME_IDS)(
-    "%s's every agentMap value resolves to a canonical phase id",
-    (id) => {
-      const doc = loadRuntime(id);
-      for (const [runtimeName, phaseId] of Object.entries(doc.agentMap)) {
-        expect(
-          CANONICAL_PHASE_IDS.includes(phaseId),
-          `${id}.yaml agentMap["${runtimeName}"] = "${phaseId}" is not a canonical phase id`,
-        ).toBe(true);
-      }
-    },
-  );
-
-  it.each(RUNTIME_IDS)(
-    "%s's every prefixMap key is a known provider prefix",
-    (id) => {
-      const doc = loadRuntime(id);
-      for (const prefix of Object.keys(doc.prefixMap)) {
-        expect(
-          (KNOWN_PROVIDER_PREFIXES as readonly string[]).includes(prefix),
-          `${id}.yaml prefixMap key "${prefix}" is not a known provider prefix`,
-        ).toBe(true);
-      }
-    },
-  );
-
   it.each(RUNTIME_IDS)("%s declares at least one prefixMap entry", (id) => {
     const doc = loadRuntime(id);
     expect(Object.keys(doc.prefixMap).length).toBeGreaterThan(0);
+  });
+
+  it.each(RUNTIME_IDS)("%s's agentMap values are unique", (id) => {
+    const doc = loadRuntime(id);
+    const targetPhaseIds = Object.values(doc.agentMap);
+    expect(new Set(targetPhaseIds).size).toBe(targetPhaseIds.length);
+  });
+
+  // T10.10 (slice 9 advisory, reopened after review flagged this file's own
+  // hand-copied 27-id list and prefix array): every agentMap value against
+  // the ids data/phases/phases.yaml actually declares, every prefixMap key
+  // against the providerPrefix values the committed subscriptions actually
+  // declare, and agentMap uniqueness within each runtime — all in one pass
+  // over the real data files, through the same cross-file integrity check
+  // buildBundle runs on its input.
+  it("every runtime's agentMap and prefixMap pass cross-file integrity against the real data files", () => {
+    const dataSet: DataSet = {
+      subscriptions: loadSubscriptionRecords(),
+      models: [],
+      phases: loadPhaseRecords(),
+      overrides: [],
+      runtimes: RUNTIME_IDS.map((id) => loadRuntime(id)),
+    };
+    expect(checkCrossFileIntegrity(dataSet)).toEqual([]);
+  });
+
+  // T10.10: the runtime files this test suite iterates (RUNTIME_IDS, driven
+  // by EXPECTED_AGENT_MAP_COUNTS) must be exactly the files committed under
+  // data/runtimes/ — so a new or removed runtime file cannot go untested.
+  it("data/runtimes/ contains exactly the runtime files this suite iterates", () => {
+    const committedIds = readdirSync(runtimesDir)
+      .filter((name) => name.endsWith(".yaml"))
+      .map((name) => name.replace(/\.yaml$/, ""))
+      .sort();
+    expect(committedIds).toEqual([...RUNTIME_IDS].sort());
   });
 
   // Pinned scenario from the runtime-mappings spec: Pi's own agent name for

@@ -2,8 +2,14 @@ import { readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { deriveBudgetClass, readYamlFile, validateModel, validateSubscription } from "../src/index.js";
-import type { Threshold } from "../src/types.js";
+import {
+  buildBundle,
+  deriveBudgetClass,
+  readYamlFile,
+  validateModel,
+  validateSubscription,
+} from "../src/index.js";
+import type { DataSet, ModelRecord, SubscriptionRecord, Threshold } from "../src/types.js";
 
 /**
  * Expected ids for the OpenCode Go catalog, grouped by the work unit that
@@ -211,63 +217,107 @@ describe("opencode-go catalog", () => {
     expect(baseClass).toBe("volume");
   });
 
-  // Proves the promo-invariance rule itself against a synthetic
-  // promo-bearing plan, entirely independent of the live catalog: the only
-  // promo committed today (deepseek-v4.1-flash) expires 2026-09-20, and a
-  // catalog-only scan would go vacuous the moment it is removed. This test
-  // keeps failing loudly if `deriveBudgetClass` (or a future call site) ever
-  // starts reading a multiplier-scaled cap instead of the base one, with or
-  // without any live promo in the data.
-  it("a synthetic promo multiplier never changes the derived Budget Class", () => {
+  // T10.2b (reopened T8.5): proves promo invariance where the cap is
+  // actually selected — passes a synthetic promo-bearing model through the
+  // real buildBundle pipeline (not two isolated deriveBudgetClass calls
+  // over the same arguments, which could never fail) and asserts the
+  // injected budgetClass comes from the base cap, entirely independent of
+  // the live catalog. RED-first: before buildBundle existed, this test
+  // failed to import it; that failure, and the failure of a deliberately
+  // wrong "multiply the cap" implementation, were both observed (see the
+  // slice 10 report).
+  it("buildBundle injects the Budget Class derived from the base cap, never the promo-scaled one", () => {
     const syntheticThresholds: Threshold[] = [
       { class: "sniper", max: 199 },
       { class: "semi", max: 499 },
       { class: "workhorse", max: 5000 },
       { class: "volume", max: null },
     ];
-    const syntheticPlan = { requestsPer5h: 1625, multiplier: 4 };
+    // 1,625 requests/5h is workhorse; the 4x-promoted 6,500 is volume — the
+    // multiplier alone crosses a threshold, so a wrong implementation that
+    // derives from the promoted figure is caught, not coincidentally equal.
+    const syntheticSubscription: SubscriptionRecord = {
+      id: "promo-fixture-sub",
+      displayName: "Promo Fixture Subscription",
+      providerPrefix: "promo-fixture-sub",
+      billingModel: "capped",
+      budgetClass: { derivedFrom: "requestsPer5h", thresholds: syntheticThresholds },
+      catalogSourceUrl: "https://example.com/catalog",
+      verifiedAt: "2026-09-17",
+    };
+    const syntheticModel: ModelRecord = {
+      id: "promo-fixture-model",
+      subscription: "promo-fixture-sub",
+      displayName: "Promo Fixture Model",
+      lab: "moonshot",
+      status: "current",
+      strengths: {
+        oneShotReasoning: 1,
+        sustainedReasoning: 1,
+        codingTools: 1,
+        longContext: 1,
+        multimodal: 0,
+        cheap: 1,
+      },
+      privacy: { trainsOnData: false, logRetentionDays: 0 },
+      effortVariants: ["medium"],
+      plans: {
+        go: {
+          requestsPer5h: 1625,
+          requestsPerWeek: 8000,
+          requestsPerMonth: 32000,
+          monthlyUsdBucket: 10,
+          source: "https://example.com/catalog",
+          verifiedAt: "2026-09-17",
+          multiplier: 4,
+          multiplierExpiresAt: "2099-01-01",
+        },
+      },
+    };
+    const dataSet: DataSet = {
+      subscriptions: [syntheticSubscription],
+      models: [syntheticModel],
+      phases: [],
+      overrides: [],
+      runtimes: [],
+    };
 
-    const baseClass = deriveBudgetClass(syntheticPlan.requestsPer5h, syntheticThresholds);
-    const promotedRequestsPer5h = syntheticPlan.requestsPer5h * syntheticPlan.multiplier;
-    const promotedClass = deriveBudgetClass(promotedRequestsPer5h, syntheticThresholds);
+    const bundle = buildBundle(dataSet);
+    const injectedBudgetClass = bundle.payload.models[0]?.plans["go"]?.budgetClass;
 
-    // The multiplier alone would cross a threshold (1,625 is workhorse;
-    // 6,500 is volume) if derivation ever used it, so this is a genuine
-    // proof, not a coincidence of equal classes either side of the promo.
-    expect(baseClass).toBe("workhorse");
-    expect(promotedClass).not.toBe(baseClass);
-
-    // The invariant: derivation must use the base cap, so a model's own
-    // recorded Budget Class never reads the promoted figure.
-    const derivedFromBaseCap = deriveBudgetClass(syntheticPlan.requestsPer5h, syntheticThresholds);
-    expect(derivedFromBaseCap).toBe(baseClass);
+    expect(injectedBudgetClass).toBe("workhorse");
+    expect(injectedBudgetClass).not.toBe(deriveBudgetClass(1625 * 4, syntheticThresholds));
   });
 
   // Every promo-bearing model actually in the catalog today (one carrying
   // `plans.go.multiplier`) must also keep the same derived Budget Class
-  // before and after its promo. This scan is additional real-data
-  // assurance on top of the synthetic proof above, so it is written to
-  // pass — not vacuously, but harmlessly — once no catalog model carries a
-  // multiplier any more (the deepseek-v4.1-flash promo above ends
-  // 2026-09-20).
-  it("every currently promo-bearing catalog model keeps its Budget Class across the promo", () => {
-    const subscription = readYamlFile(subscriptionPath, dataRoot) as SubscriptionDoc;
-    const { thresholds } = subscription.budgetClass;
-
-    const promoBearingIds = EXPECTED_IDS.filter((id) => {
-      const doc = loadModel(id);
-      return typeof doc.plans["go"]?.multiplier === "number";
-    });
-
-    for (const id of promoBearingIds) {
-      const doc = loadModel(id);
-      const plan = doc.plans["go"];
-      const baseClass = deriveBudgetClass(plan?.requestsPer5h ?? null, thresholds);
-      const promotedRequestsPer5h = (plan?.requestsPer5h ?? 0) * (plan?.multiplier ?? 1);
-      const promotedClass = deriveBudgetClass(promotedRequestsPer5h, thresholds);
-      expect(baseClass).toBe(promotedClass);
-    }
+  // before and after its promo — additional real-data assurance on top of
+  // the buildBundle proof above. Skips explicitly, with a stated reason,
+  // instead of quietly passing over zero iterations, once no catalog model
+  // carries a multiplier any more (the deepseek-v4.1-flash promo above
+  // ends 2026-09-20); the invariant itself no longer depends on this data
+  // existing.
+  const promoBearingIds = EXPECTED_IDS.filter((id) => {
+    const doc = loadModel(id);
+    return typeof doc.plans["go"]?.multiplier === "number";
   });
+
+  it.skipIf(promoBearingIds.length === 0)(
+    "every currently promo-bearing catalog model keeps its Budget Class across the promo",
+    () => {
+      const subscription = readYamlFile(subscriptionPath, dataRoot) as SubscriptionDoc;
+      const { thresholds } = subscription.budgetClass;
+
+      for (const id of promoBearingIds) {
+        const doc = loadModel(id);
+        const plan = doc.plans["go"];
+        const baseClass = deriveBudgetClass(plan?.requestsPer5h ?? null, thresholds);
+        const promotedRequestsPer5h = (plan?.requestsPer5h ?? 0) * (plan?.multiplier ?? 1);
+        const promotedClass = deriveBudgetClass(promotedRequestsPer5h, thresholds);
+        expect(baseClass).toBe(promotedClass);
+      }
+    },
+  );
 
   // minimax-m2.5 has no numeric `requestsPer5h` on any plan (it is absent
   // from the live 5h/week/month caps table); the schema alone cannot reject
