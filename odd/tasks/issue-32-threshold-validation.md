@@ -74,4 +74,4 @@ new error type and no new exit code.
 
 ## Next step
 
-Maintainer merges PR #36 (closes #32). Then #33.
+None: PR #36 merged on 2026-09-18 (`509865c`) and issue #32 closed.

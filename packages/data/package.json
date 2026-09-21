@@ -8,8 +8,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "validate": "tsx src/cli/validate.ts ../../data",
-    "build": "tsx src/cli/build.ts ../../data"
+    "validate": "tsx src/bin/validate.ts ../../data",
+    "build": "tsx src/bin/build.ts ../../data"
   },
   "dependencies": {
     "ajv": "^8.20.0",
