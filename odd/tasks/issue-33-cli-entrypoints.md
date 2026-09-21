@@ -80,4 +80,4 @@ workflow keep working unchanged from the repository root; no `child_process` imp
 
 ## Next step
 
-Maintainer merges PR #37 (closes #33). Then fold the four review themes into #35, and continue with #34.
+None: PR #37 merged on 2026-09-21 (`3c07a07`) and issue #33 closed. The four review themes recorded above are still to be folded into #35.
