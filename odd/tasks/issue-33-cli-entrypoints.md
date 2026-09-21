@@ -76,7 +76,8 @@ workflow keep working unchanged from the repository root; no `child_process` imp
   - The spawn test does not look at `result.error` or `result.signal` (`R4-spawn-failure-masked`, `R2-spawn-error-unchecked`, `R3-spawn-test-environment-coupling`, `R1-spawn-test-bin-path`): a missing `tsx` shim or the 15 s timeout reads as `expected null to be 2`, like a regression.
   - The two spawn tests assert the same usage-failure path (`R3-entry-tests-nondiscriminating`, `R2-duplicated-test-body`): wiring the wrong core into an entry file would not fail them.
   - Readability only: `R2-deleted-guard-comments`, `R2-import-format-drift`.
+- 2026-09-21: pushed; PR #37 opened against `main` with `Closes #33` (9 files, 194 insertions, 37 deletions); CI job `validate-and-test` passed (run 35660520944).
 
 ## Next step
 
-On the maintainer's go-ahead push `fix/33-cli-entrypoints` and open the PR against `main` with `Closes #33`. Then fold the four review themes above into #35.
+Maintainer merges PR #37 (closes #33). Then fold the four review themes into #35, and continue with #34.
