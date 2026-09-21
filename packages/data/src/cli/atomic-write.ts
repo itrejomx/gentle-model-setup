@@ -6,9 +6,9 @@ import { basename, dirname, join } from "node:path";
  * The `node:fs` operations {@link writeFileAtomic} uses, as an injectable
  * seam: real filesystem behavior by default, swapped out only in tests,
  * where a partial write followed by a failure cannot be forced through the
- * real filesystem deterministically (AGENTS.md: a fake is acceptable only
- * at this boundary -- no module mocking, no mocking of internal
- * collaborators).
+ * real filesystem deterministically. A fake is acceptable only at this
+ * boundary -- no module mocking, no mocking of internal collaborators
+ * (issue #34).
  */
 export interface AtomicWriteOps {
   writeFileSync: (path: string, data: string, encoding: "utf8") => void;

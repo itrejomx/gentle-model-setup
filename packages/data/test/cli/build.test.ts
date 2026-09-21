@@ -13,6 +13,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import type { AtomicWriteOps } from "../../src/cli/atomic-write.js";
 import { runBuildCli } from "../../src/cli/build.js";
+import { loadBundle } from "../../src/index.js";
 
 interface CapturedStreams {
   streams: { stdout: { write: (chunk: string) => boolean }; stderr: { write: (chunk: string) => boolean } };
@@ -108,8 +109,13 @@ describe("runBuildCli exit codes", () => {
     const stdout = out.join("");
     expect(stdout).toMatch(/^[0-9a-f]{64}\n$/);
 
-    const written = JSON.parse(readFileSync(outputPath, "utf8")) as { hash: string; payload: unknown };
-    expect(written.hash).toBe(stdout.trim());
+    // Reads the written file back through loadBundle, which re-hashes the
+    // payload it finds on disk: proves data.json is a loadable bundle whose
+    // stored hash matches its own content, not merely that the in-memory
+    // object printed to stdout and the in-memory object written to disk
+    // agree with each other (issue #34).
+    const loaded = await loadBundle(outputPath);
+    expect(loaded.hash).toBe(stdout.trim());
   });
 
   it("exits 1 and writes nothing for invalid data", async () => {
