@@ -1,8 +1,19 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import type { AtomicWriteOps } from "../../src/cli/atomic-write.js";
 import { runBuildCli } from "../../src/cli/build.js";
+import { loadBundle } from "../../src/index.js";
 
 interface CapturedStreams {
   streams: { stdout: { write: (chunk: string) => boolean }; stderr: { write: (chunk: string) => boolean } };
@@ -98,8 +109,13 @@ describe("runBuildCli exit codes", () => {
     const stdout = out.join("");
     expect(stdout).toMatch(/^[0-9a-f]{64}\n$/);
 
-    const written = JSON.parse(readFileSync(outputPath, "utf8")) as { hash: string; payload: unknown };
-    expect(written.hash).toBe(stdout.trim());
+    // Reads the written file back through loadBundle, which re-hashes the
+    // payload it finds on disk: proves data.json is a loadable bundle whose
+    // stored hash matches its own content, not merely that the in-memory
+    // object printed to stdout and the in-memory object written to disk
+    // agree with each other (issue #34).
+    const loaded = await loadBundle(outputPath);
+    expect(loaded.hash).toBe(stdout.trim());
   });
 
   it("exits 1 and writes nothing for invalid data", async () => {
@@ -187,5 +203,66 @@ describe("runBuildCli exit codes", () => {
 
     expect(code).toBe(2);
     expect(err.join("")).toMatch(/usage/i);
+  });
+});
+
+describe("runBuildCli atomic write (issue #34)", () => {
+  it("leaves an existing good output file byte-identical, exits 2, and leaves no temporary file, when the write fails partway", async () => {
+    const rootDir = makeTempRoot();
+    writeValidPhasesFixture(rootDir);
+    const outputDir = join(rootDir, "build");
+    mkdirSync(outputDir, { recursive: true });
+    const outputPath = join(outputDir, "data.json");
+    const originalContent = '{"hash":"existing-good-bundle"}';
+    writeFileSync(outputPath, originalContent, "utf8");
+
+    // Simulates a disk-full/I-O failure partway through the write: the real
+    // filesystem cannot be forced to fail mid-write deterministically, so
+    // this fakes only the injected `writeFileSync` boundary (no module
+    // mocking, no mocking of internal collaborators).
+    const partialWriteOps: AtomicWriteOps = {
+      writeFileSync: (path, data, encoding) => {
+        writeFileSync(path, data.slice(0, Math.floor(data.length / 2)), encoding);
+        throw new Error("simulated disk full");
+      },
+      renameSync,
+      rmSync,
+    };
+
+    const { streams, out, err } = captureStreams();
+    const code = await runBuildCli([rootDir, outputPath], streams, partialWriteOps);
+
+    expect(code).toBe(2);
+    expect(err.join("")).toMatch(/^error: cannot write ".*data\.json": simulated disk full/);
+    expect(out.join("")).toBe("");
+    expect(readFileSync(outputPath, "utf8")).toBe(originalContent);
+    expect(readdirSync(outputDir)).toEqual(["data.json"]);
+  });
+
+  it("leaves an existing good output file byte-identical, exits 2, and leaves no temporary file, when the rename fails", async () => {
+    const rootDir = makeTempRoot();
+    writeValidPhasesFixture(rootDir);
+    const outputDir = join(rootDir, "build");
+    mkdirSync(outputDir, { recursive: true });
+    const outputPath = join(outputDir, "data.json");
+    const originalContent = '{"hash":"existing-good-bundle"}';
+    writeFileSync(outputPath, originalContent, "utf8");
+
+    const failingRenameOps: AtomicWriteOps = {
+      writeFileSync,
+      renameSync: () => {
+        throw new Error("simulated rename failure");
+      },
+      rmSync,
+    };
+
+    const { streams, out, err } = captureStreams();
+    const code = await runBuildCli([rootDir, outputPath], streams, failingRenameOps);
+
+    expect(code).toBe(2);
+    expect(err.join("")).toMatch(/^error: cannot write ".*data\.json": simulated rename failure/);
+    expect(out.join("")).toBe("");
+    expect(readFileSync(outputPath, "utf8")).toBe(originalContent);
+    expect(readdirSync(outputDir)).toEqual(["data.json"]);
   });
 });

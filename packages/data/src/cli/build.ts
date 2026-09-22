@@ -1,8 +1,10 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { buildBundle } from "../bundle.js";
 import { DataValidationError } from "../errors.js";
 import { loadData } from "../load-data.js";
+import { writeFileAtomic } from "./atomic-write.js";
+import type { AtomicWriteOps } from "./atomic-write.js";
 import {
   checkRootDir,
   DEFAULT_DATA_ROOT,
@@ -29,7 +31,11 @@ const DEFAULT_OUTPUT_PATH = join("build", "data.json");
  * filesystem paths, never interpolated into a shell (threat matrix: CLI
  * argument composition). Args and streams in, exit code out.
  */
-export async function runBuildCli(args: string[], streams: CliStreams): Promise<number> {
+export async function runBuildCli(
+  args: string[],
+  streams: CliStreams,
+  ops?: AtomicWriteOps,
+): Promise<number> {
   if (args.length > 2) {
     streams.stderr.write("usage: build [dataRoot] [outputPath]\n");
     return EXIT_USAGE;
@@ -59,10 +65,12 @@ export async function runBuildCli(args: string[], streams: CliStreams): Promise<
 
   // A failed write (the output path is a directory, its parent is a file,
   // the location is read-only) is an I/O error: exit 2, never a raw `fs`
-  // error that Node would report as exit 1.
+  // error that Node would report as exit 1. Written atomically (issue #34):
+  // a write or rename that fails partway leaves any pre-existing bundle at
+  // `outputPath` byte-identical, instead of a truncated `data.json`.
   try {
     mkdirSync(dirname(outputPath), { recursive: true });
-    writeFileSync(outputPath, JSON.stringify(bundle, null, 2) + "\n", "utf8");
+    writeFileAtomic(outputPath, JSON.stringify(bundle, null, 2) + "\n", ops);
   } catch (cause) {
     streams.stderr.write(`error: cannot write "${outputPath}": ${errorMessage(cause)}\n`);
     return EXIT_USAGE;
