@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import type { AtomicWriteOps } from "../../src/cli/atomic-write.js";
-import { runBuildCli } from "../../src/cli/build.js";
+import { runBuildCli } from "../../src/cli/build-command.js";
 import { loadBundle } from "../../src/index.js";
 
 interface CapturedStreams {

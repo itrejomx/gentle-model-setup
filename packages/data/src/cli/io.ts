@@ -107,12 +107,24 @@ export async function runGuarded(
  * one-line, always-run call (AGENTS.md: "the entrypoint only wires
  * `process` to it"). Unlike the deleted `import.meta.url` guard this
  * replaces, it has no condition to get wrong (issue #33).
+ *
+ * The trailing `.catch` covers `runGuarded` itself rejecting -- for example
+ * `streams.stderr.write` throwing inside `runGuarded`'s own catch path (an
+ * `EPIPE` when the consumer closed the pipe). Without it, that rejection
+ * went unhandled and Node exited `1` with a stack trace, the code reserved
+ * for invalid data, instead of the `2` this reports (issue #35, from the
+ * follow-up comment).
  */
 export function runEntry(run: (args: string[], streams: CliStreams) => Promise<number>): void {
-  void runGuarded(run, process.argv.slice(2), {
+  runGuarded(run, process.argv.slice(2), {
     stdout: process.stdout,
     stderr: process.stderr,
-  }).then((code) => {
-    process.exitCode = code;
-  });
+  })
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch((cause: unknown) => {
+      process.stderr.write(`error: ${errorMessage(cause)}\n`);
+      process.exitCode = EXIT_IO_ERROR;
+    });
 }
