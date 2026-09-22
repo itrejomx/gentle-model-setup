@@ -77,4 +77,4 @@ bundle hash for the committed `data/` does not change.
 
 ## Next step
 
-Maintainer merges PR #38 (closes #34). Then #35, which also absorbs the review themes of #37 and the two findings of this PR.
+None: PR #38 merged on 2026-09-22 (`d200093`) and issue #34 closed. Its two review findings were done in #35.
