@@ -1,7 +1,10 @@
 import {
+  closeSync,
   existsSync,
+  fsyncSync,
   mkdirSync,
   mkdtempSync,
+  openSync,
   readdirSync,
   readFileSync,
   renameSync,
@@ -57,6 +60,17 @@ function makeTempRoot(): string {
   const dir = mkdtempSync(join(tmpdir(), "gentle-ai-build-cli-"));
   cleanupDirs.push(dir);
   return dir;
+}
+
+/** Real `fsyncSync`, by path rather than an already-open file descriptor --
+ * matches the shape `AtomicWriteOps.fsyncSync` needs (issue #35, from #38). */
+function fsyncSyncByPath(path: string): void {
+  const fd = openSync(path, "r+");
+  try {
+    fsyncSync(fd);
+  } finally {
+    closeSync(fd);
+  }
 }
 
 /** Same minimal valid fixture used by the validate CLI tests: only
@@ -225,6 +239,9 @@ describe("runBuildCli atomic write (issue #34)", () => {
         writeFileSync(path, data.slice(0, Math.floor(data.length / 2)), encoding);
         throw new Error("simulated disk full");
       },
+      // Never reached: the write above throws first, before fsync. Present
+      // only because the interface requires it.
+      fsyncSync: () => {},
       renameSync,
       rmSync,
     };
@@ -250,6 +267,7 @@ describe("runBuildCli atomic write (issue #34)", () => {
 
     const failingRenameOps: AtomicWriteOps = {
       writeFileSync,
+      fsyncSync: fsyncSyncByPath,
       renameSync: () => {
         throw new Error("simulated rename failure");
       },
@@ -264,5 +282,68 @@ describe("runBuildCli atomic write (issue #34)", () => {
     expect(out.join("")).toBe("");
     expect(readFileSync(outputPath, "utf8")).toBe(originalContent);
     expect(readdirSync(outputDir)).toEqual(["data.json"]);
+  });
+
+  // Issue #35 (from #38): without an `fsync` before the rename, the write is
+  // atomic against in-process failures but not against an OS crash between
+  // the write and the rename -- the temporary file's data could still be
+  // sitting in the page cache, unflushed, when the rename makes it visible
+  // at the destination path. Recording call order (rather than asserting on
+  // real crash behavior, which cannot be forced deterministically) proves
+  // the fsync happens, and happens before the rename.
+  it("fsyncs the temporary file before renaming it over the destination", async () => {
+    const rootDir = makeTempRoot();
+    writeValidPhasesFixture(rootDir);
+    const outputPath = join(rootDir, "build", "data.json");
+
+    const callOrder: string[] = [];
+    const trackingOps: AtomicWriteOps = {
+      writeFileSync: (path, data, encoding) => {
+        callOrder.push("write");
+        writeFileSync(path, data, encoding);
+      },
+      fsyncSync: (path) => {
+        callOrder.push("fsync");
+        fsyncSyncByPath(path);
+      },
+      renameSync: (oldPath, newPath) => {
+        callOrder.push("rename");
+        renameSync(oldPath, newPath);
+      },
+      rmSync,
+    };
+
+    const { streams } = captureStreams();
+    const code = await runBuildCli([rootDir, outputPath], streams, trackingOps);
+
+    expect(code).toBe(0);
+    expect(callOrder).toEqual(["write", "fsync", "rename"]);
+  });
+
+  // Issue #35 (from #38): the cleanup `rmSync` next to a failing write is
+  // itself wrapped in a try/catch so its own failure never masks the
+  // original error -- untested until now.
+  it("reports the original write error, not a masking cleanup failure, when the cleanup rmSync also throws", async () => {
+    const rootDir = makeTempRoot();
+    writeValidPhasesFixture(rootDir);
+    const outputPath = join(rootDir, "build", "data.json");
+
+    const failingCleanupOps: AtomicWriteOps = {
+      writeFileSync: () => {
+        throw new Error("simulated disk full");
+      },
+      fsyncSync: fsyncSyncByPath,
+      renameSync,
+      rmSync: () => {
+        throw new Error("simulated cleanup failure");
+      },
+    };
+
+    const { streams, out, err } = captureStreams();
+    const code = await runBuildCli([rootDir, outputPath], streams, failingCleanupOps);
+
+    expect(code).toBe(2);
+    expect(err.join("")).toMatch(/^error: cannot write ".*data\.json": simulated disk full/);
+    expect(out.join("")).toBe("");
   });
 });
