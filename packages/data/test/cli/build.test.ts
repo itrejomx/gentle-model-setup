@@ -3,7 +3,6 @@ import {
   existsSync,
   fsyncSync,
   mkdirSync,
-  mkdtempSync,
   openSync,
   readdirSync,
   readFileSync,
@@ -11,41 +10,16 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import type { AtomicWriteOps } from "../../src/cli/atomic-write.js";
 import { runBuildCli } from "../../src/cli/build-command.js";
 import { loadBundle } from "../../src/index.js";
-
-interface CapturedStreams {
-  streams: { stdout: { write: (chunk: string) => boolean }; stderr: { write: (chunk: string) => boolean } };
-  out: string[];
-  err: string[];
-}
-
-function captureStreams(): CapturedStreams {
-  const out: string[] = [];
-  const err: string[] = [];
-  return {
-    streams: {
-      stdout: {
-        write: (chunk: string) => {
-          out.push(chunk);
-          return true;
-        },
-      },
-      stderr: {
-        write: (chunk: string) => {
-          err.push(chunk);
-          return true;
-        },
-      },
-    },
-    out,
-    err,
-  };
-}
+import {
+  captureStreams,
+  makeTempRoot as makeTempRootIn,
+  writeValidPhasesFixture,
+} from "./test-helpers.js";
 
 const cleanupDirs: string[] = [];
 
@@ -57,9 +31,7 @@ afterEach(() => {
 });
 
 function makeTempRoot(): string {
-  const dir = mkdtempSync(join(tmpdir(), "gentle-ai-build-cli-"));
-  cleanupDirs.push(dir);
-  return dir;
+  return makeTempRootIn(cleanupDirs, "gentle-ai-build-cli-");
 }
 
 /** Real `fsyncSync`, by path rather than an already-open file descriptor --
@@ -71,25 +43,6 @@ function fsyncSyncByPath(path: string): void {
   } finally {
     closeSync(fd);
   }
-}
-
-/** Same minimal valid fixture used by the validate CLI tests: only
- * `phases/phases.yaml` needs to exist for a zero-error DataSet. */
-function writeValidPhasesFixture(rootDir: string): void {
-  mkdirSync(join(rootDir, "phases"), { recursive: true });
-  writeFileSync(
-    join(rootDir, "phases", "phases.yaml"),
-    [
-      "phases:",
-      "  - id: fixture-phase",
-      "    group: workers",
-      "    callPattern: one-shot",
-      "    role: neutral",
-      "    weights: { oneShotReasoning: 1, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 0 }",
-      "",
-    ].join("\n"),
-    "utf8",
-  );
 }
 
 describe("runBuildCli threat matrix: CLI argument composition", () => {
@@ -180,6 +133,29 @@ describe("runBuildCli exit codes", () => {
 
     expect(code).toBe(1);
     expect(stderr).toContain("bad-thresholds.yaml:budgetClass.thresholds:");
+    expect(existsSync(outputPath)).toBe(false);
+  });
+
+  // Issue #35: "no CLI test feeds malformed YAML to validate or build" --
+  // both exit 1 today, pinned here. Also proves the single-line message
+  // format (T2) survives the full loader/CLI pipeline for build, not just
+  // for validate.
+  it("exits 1 and writes nothing, with a single-line message, for malformed YAML", async () => {
+    const rootDir = makeTempRoot();
+    writeValidPhasesFixture(rootDir);
+    mkdirSync(join(rootDir, "subscriptions"), { recursive: true });
+    writeFileSync(join(rootDir, "subscriptions", "malformed.yaml"), "id: [unclosed\n", "utf8");
+    const outputPath = join(rootDir, "build", "data.json");
+
+    const { streams, out, err } = captureStreams();
+    const code = await runBuildCli([rootDir, outputPath], streams);
+    const lines = err.join("").split("\n").filter((line) => line.length > 0);
+
+    expect(code).toBe(1);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toMatch(/malformed\.yaml:<document>: failed to parse YAML: .+/);
+    expect(lines[1]).toBe("1 error(s) in 1 file(s)");
+    expect(out.join("")).toBe("");
     expect(existsSync(outputPath)).toBe(false);
   });
 

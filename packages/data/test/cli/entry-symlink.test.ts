@@ -1,9 +1,10 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+import { makeTempRoot, writeValidPhasesFixture } from "./test-helpers.js";
 
 // AGENTS.md bans `child_process` across `packages/data`; the enforcement
 // mechanism (`no-child-process.test.ts`) scans only `src`, so this file --
@@ -38,26 +39,6 @@ function symlinkedEntryPath(entryRelativePath: string): string {
   const linkPath = join(tmpParent, "pkg");
   symlinkSync(packageDir, linkPath, "dir");
   return join(linkPath, entryRelativePath);
-}
-
-/** Minimal valid `phases/phases.yaml` -- the only collection whose file must
- * exist for a zero-error DataSet (mirrors `writeValidPhasesFixture` in
- * `cli/build.test.ts` and `cli/validate.test.ts`). */
-function writeValidPhasesFixture(rootDir: string): void {
-  mkdirSync(join(rootDir, "phases"), { recursive: true });
-  writeFileSync(
-    join(rootDir, "phases", "phases.yaml"),
-    [
-      "phases:",
-      "  - id: fixture-phase",
-      "    group: workers",
-      "    callPattern: one-shot",
-      "    role: neutral",
-      "    weights: { oneShotReasoning: 1, sustainedReasoning: 0, codingTools: 0, longContext: 0, multimodal: 0, cheap: 0 }",
-      "",
-    ].join("\n"),
-    "utf8",
-  );
 }
 
 describe("CLI entry through a symlinked path (issue #33)", () => {
@@ -106,8 +87,7 @@ describe("CLI entry through a symlinked path (issue #33)", () => {
 describe("CLI entry success path distinguishes the two cores (issue #35)", () => {
   it("validate prints nothing to stdout for a valid data root", () => {
     const entry = symlinkedEntryPath("src/bin/validate.ts");
-    const dataRoot = mkdtempSync(join(tmpdir(), "gentle-ai-cli-entry-data-"));
-    cleanupDirs.push(dataRoot);
+    const dataRoot = makeTempRoot(cleanupDirs, "gentle-ai-cli-entry-data-");
     writeValidPhasesFixture(dataRoot);
 
     const result = spawnSync(tsxBin, [entry, dataRoot], {
@@ -123,8 +103,7 @@ describe("CLI entry success path distinguishes the two cores (issue #35)", () =>
 
   it("build prints a 64-hex bundle hash to stdout for a valid data root", () => {
     const entry = symlinkedEntryPath("src/bin/build.ts");
-    const dataRoot = mkdtempSync(join(tmpdir(), "gentle-ai-cli-entry-data-"));
-    cleanupDirs.push(dataRoot);
+    const dataRoot = makeTempRoot(cleanupDirs, "gentle-ai-cli-entry-data-");
     writeValidPhasesFixture(dataRoot);
     const outputPath = join(dataRoot, "out.json");
 

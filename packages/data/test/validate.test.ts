@@ -317,6 +317,21 @@ describe("validatePhases", () => {
       'duplicate phase id "sdd-apply" (first declared at phases.0.id)',
     );
   });
+
+  // Issue #35 (from the issue body): the unknown-field test elsewhere
+  // (validateOverride) only checked a top-level key; a nested one exercises
+  // the same instancePathToField/additionalProperties branch one level
+  // deeper.
+  it("rejects an unknown field nested under weights, naming the exact field", () => {
+    const doc = loadFixture("invalid/phases-unknown-nested-field/phases.yaml");
+    const errors = validatePhases(doc, "phases.yaml");
+
+    const unknownFieldError = errors.find(
+      (error) => error.field === "phases.0.weights.extraAxis",
+    );
+    expect(unknownFieldError).toBeDefined();
+    expect(unknownFieldError?.message).toContain("extraAxis");
+  });
 });
 
 describe("validateRuntime", () => {
@@ -357,13 +372,14 @@ describe("validateOverride", () => {
   // WU2 advisory (R3-additional-properties-field-unnamed): Ajv's default
   // additionalProperties error names the object it rejected, not the extra
   // key itself, so the offending field must be named explicitly.
-  it("rejects an unknown top-level field, naming it in both the field and the message", () => {
+  // Issue #35 (from the issue body): tightened from `field.endsWith(...)`
+  // to the exact field, so a stray prefix (for example a leading ".") would
+  // fail this test instead of slipping through.
+  it("rejects an unknown top-level field, naming the exact field and the message", () => {
     const doc = loadFixture("invalid/override-unknown-field/override.yaml");
     const errors = validateOverride(doc, "override.yaml");
 
-    const unknownFieldError = errors.find((error) =>
-      error.field.endsWith("notAField"),
-    );
+    const unknownFieldError = errors.find((error) => error.field === "notAField");
     expect(unknownFieldError).toBeDefined();
     expect(unknownFieldError?.message).toContain("notAField");
   });

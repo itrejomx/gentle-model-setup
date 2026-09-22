@@ -34,8 +34,10 @@ a suggestion.
 
 ## Security
 
-- `packages/data` never imports `child_process` and never uses `exec`, `eval`, `new Function`, or
-  shell interpolation. A CLI path argument is only ever a literal filesystem path.
+- `packages/data/src` never imports `child_process` and never uses `exec`, `eval`, `new Function`,
+  or shell interpolation (a test under `packages/data/test/` may spawn a process to reproduce a
+  bug an in-process call cannot exercise). A CLI path argument is only ever a literal filesystem
+  path.
 - File reads stay inside the data root they were given. YAML is parsed with the existing loader
   and its limits; no second parser or relaxed options.
 - `.github/workflows/*` trigger on `pull_request` only, never `pull_request_target`, declare

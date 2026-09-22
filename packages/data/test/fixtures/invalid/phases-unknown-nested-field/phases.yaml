@@ -1,0 +1,13 @@
+phases:
+  - id: sdd-apply
+    group: sdd
+    callPattern: loop
+    role: implementer
+    weights:
+      oneShotReasoning: 0.1
+      sustainedReasoning: 0.25
+      codingTools: 0.4
+      longContext: 0.15
+      multimodal: 0
+      cheap: 0.1
+      extraAxis: 0.5

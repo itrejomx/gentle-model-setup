@@ -1,8 +1,12 @@
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { readYamlFile, YamlLoadError } from "../src/yaml.js";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const fixturesDir = join(here, "fixtures");
 
 const cleanupDirs: string[] = [];
 
@@ -75,21 +79,16 @@ describe("readYamlFile parse failure message (issue #35)", () => {
   });
 });
 
+// Issue #35 (from the issue body): the alias-bomb fixture under
+// `test/fixtures/invalid/alias-bomb/` was committed but unused -- this test
+// previously wrote its own inline copy of the same document instead of
+// reading it. Reads the committed fixture directly now, `rootDir` and
+// `filePath` both pointing at it, so the fixture is exercised for real.
 describe("readYamlFile alias-bomb guard (threat matrix: untrusted data parsing)", () => {
-  it("rejects a committed alias-bomb fixture without hanging", () => {
-    const rootDir = mkdtempSync(join(tmpdir(), "data-root-"));
-    cleanupDirs.push(rootDir);
-    const filePath = join(rootDir, "alias-bomb.yaml");
-    const aliasBomb = [
-      "lvl0: &lvl0 [x, x, x, x, x]",
-      "lvl1: &lvl1 [*lvl0, *lvl0, *lvl0, *lvl0, *lvl0]",
-      "lvl2: &lvl2 [*lvl1, *lvl1, *lvl1, *lvl1, *lvl1]",
-      "lvl3: &lvl3 [*lvl2, *lvl2, *lvl2, *lvl2, *lvl2]",
-      "lvl4: [*lvl3, *lvl3, *lvl3, *lvl3, *lvl3]",
-      "",
-    ].join("\n");
-    writeFileSync(filePath, aliasBomb, "utf8");
+  it("rejects the committed alias-bomb fixture without hanging", () => {
+    const fixtureDir = join(fixturesDir, "invalid", "alias-bomb");
+    const filePath = join(fixtureDir, "data.yaml");
 
-    expect(() => readYamlFile(filePath, rootDir)).toThrow(/alias/i);
+    expect(() => readYamlFile(filePath, fixtureDir)).toThrow(/alias/i);
   });
 });
