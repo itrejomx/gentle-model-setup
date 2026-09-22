@@ -73,7 +73,8 @@ bundle hash for the committed `data/` does not change.
 - 2026-09-21: parent gate. Reflog clean; diff vs `main` is `packages/data/src/cli/atomic-write.ts`, `src/cli/build.ts`, `test/cli/build.test.ts`, and this document; `.gga` untracked. Re-run by the parent: `pnpm -r typecheck` clean; `pnpm validate` exit 0; `pnpm test` 18 files, 569/569; `pnpm build` hash `be3e880d...` unchanged, and `packages/data/build/` holds only `data.json`; no `child_process` under `packages/data/src`.
 - 2026-09-21: T6 done in this commit.
 - 2026-09-21: native review (assessed `medium`: executable change in `atomic-write.ts`). The first granted START stopped with `managed_assets_outdated`; the parent ran the `gentle-ai sync --agent claude-code` from the stop's continuation (managed assets only, nothing in the repository changed), re-queried STATUS, and the maintainer granted the re-issued envelope. Reliability lens, approved and acknowledged (lineage `review-9417f41c03638293`, authority burned). Two informational findings, both true, left for #35: `R3-no-fsync-before-rename` (the write is atomic against in-process failures, the stated objective, not against an OS crash between rename and flush; either `fsyncSync` before the rename or a doc-comment statement of the boundary); `R3-cleanup-failure-path-untested` (the `catch` that keeps a cleanup failure from masking the original error has no test; inject a throwing `rmSync` next to a failing write).
+- 2026-09-21: pushed; PR #38 opened against `main` with `Closes #34` (5 files, 224 insertions, 8 deletions); CI job `validate-and-test` passed (run 35674733888).
 
 ## Next step
 
-On the maintainer's go-ahead push `feat/34-atomic-bundle-write` and open the PR against `main` with `Closes #34`.
+Maintainer merges PR #38 (closes #34). Then #35, which also absorbs the review themes of #37 and the two findings of this PR.
