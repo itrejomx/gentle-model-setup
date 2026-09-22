@@ -1,13 +1,22 @@
 import { statSync } from "node:fs";
+import { errorMessage } from "../errors.js";
 import type { DataError } from "../errors.js";
 
 /** Exit codes per design.md's CLI contract: `0` success, `1` data invalid
  * (includes a YAML parse failure and, for `build`, a cross-file integrity
- * failure), `2` usage or environment failure (a missing or unreadable data
- * root, or a malformed argument list). */
+ * failure), `2` usage or I/O error (AGENTS.md). `EXIT_USAGE` and
+ * `EXIT_IO_ERROR` are two names for that same exit-`2` bucket -- design.md's
+ * CLI table has no separate code for either -- split so a call site names
+ * which kind of exit-`2` failure it is: `EXIT_USAGE` for a malformed
+ * argument list, `EXIT_IO_ERROR` for everything else (a missing or
+ * unreadable data root, a failed output write, an unexpected throw). Before
+ * the split, every one of those sites read `return EXIT_USAGE`, which misled
+ * a reader at, for example, a failed output write into thinking it was an
+ * argument problem (issue #35: R2-exit-usage-name-overloaded). */
 export const EXIT_OK = 0;
 export const EXIT_INVALID = 1;
 export const EXIT_USAGE = 2;
+export const EXIT_IO_ERROR = 2;
 
 /** The default data root both CLIs load from when no positional argument is
  * given, matching design.md's CLI table (`validateData('data')`). */
@@ -21,12 +30,6 @@ export const DEFAULT_DATA_ROOT = "data";
 export interface CliStreams {
   stdout: Pick<NodeJS.WritableStream, "write">;
   stderr: Pick<NodeJS.WritableStream, "write">;
-}
-
-/** Message of a caught value, narrowed instead of cast: a `throw` can carry
- * anything, not only an `Error`. */
-export function errorMessage(cause: unknown): string {
-  return cause instanceof Error ? cause.message : String(cause);
 }
 
 export type RootDirCheck = { ok: true } | { ok: false; message: string };
@@ -93,7 +96,7 @@ export async function runGuarded(
     return await run(args, streams);
   } catch (cause) {
     streams.stderr.write(`error: ${errorMessage(cause)}\n`);
-    return EXIT_USAGE;
+    return EXIT_IO_ERROR;
   }
 }
 

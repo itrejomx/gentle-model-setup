@@ -54,6 +54,27 @@ describe("readYamlFile raw fs error surface (threat matrix: CLI argument composi
   });
 });
 
+// Issue #35 (R3-yaml-parse-exit-code-unproved): the `yaml` parser's own
+// error message includes a multi-line "code frame" pointing at the
+// offending column, which breaks the CLIs' one-line `<file>:<field>:
+// <message>` format. Only the first line should survive.
+describe("readYamlFile parse failure message (issue #35)", () => {
+  it("keeps the YAML parser's message on one line, dropping its code frame", () => {
+    expect.assertions(2);
+    const rootDir = mkdtempSync(join(tmpdir(), "data-root-"));
+    cleanupDirs.push(rootDir);
+    const filePath = join(rootDir, "malformed.yaml");
+    writeFileSync(filePath, "id: [unclosed\n", "utf8");
+
+    try {
+      readYamlFile(filePath, rootDir);
+    } catch (error) {
+      expect(error).toBeInstanceOf(YamlLoadError);
+      expect((error as YamlLoadError).dataError.message.includes("\n")).toBe(false);
+    }
+  });
+});
+
 describe("readYamlFile alias-bomb guard (threat matrix: untrusted data parsing)", () => {
   it("rejects a committed alias-bomb fixture without hanging", () => {
     const rootDir = mkdtempSync(join(tmpdir(), "data-root-"));

@@ -1,6 +1,7 @@
 import { readFileSync, realpathSync } from "node:fs";
 import { resolve, sep } from "node:path";
 import { parse } from "yaml";
+import { errorMessage } from "./errors.js";
 import type { DataError } from "./errors.js";
 
 /**
@@ -46,7 +47,7 @@ export function resolveContainedPath(filePath: string, rootDir: string): string 
     throw new YamlLoadError({
       file: filePath,
       field: "<path>",
-      message: `unable to resolve path: ${(cause as Error).message}`,
+      message: `unable to resolve path: ${errorMessage(cause)}`,
     });
   }
   const isContained =
@@ -77,7 +78,7 @@ export function readYamlFile(filePath: string, rootDir: string): unknown {
     throw new YamlLoadError({
       file: filePath,
       field: "<path>",
-      message: `unable to read file: ${(cause as Error).message}`,
+      message: `unable to read file: ${errorMessage(cause)}`,
     });
   }
 
@@ -87,7 +88,18 @@ export function readYamlFile(filePath: string, rootDir: string): unknown {
     throw new YamlLoadError({
       file: filePath,
       field: "<document>",
-      message: `failed to parse YAML: ${(cause as Error).message}`,
+      message: `failed to parse YAML: ${firstLine(errorMessage(cause))}`,
     });
   }
+}
+
+/** Keeps only the first line of a message: the `yaml` parser's own error
+ * messages include a multi-line "code frame" pointing at the offending
+ * column, which would otherwise break the CLIs' one-line
+ * `<file>:<field>: <message>` output format (issue #35:
+ * R3-yaml-parse-exit-code-unproved). `String.split` always returns at
+ * least one element, so the fallback never actually triggers; it only
+ * satisfies `noUncheckedIndexedAccess`. */
+function firstLine(message: string): string {
+  return message.split("\n")[0] ?? message;
 }

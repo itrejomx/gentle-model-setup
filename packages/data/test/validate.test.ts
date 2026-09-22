@@ -131,6 +131,35 @@ describe("validateSubscription", () => {
     }
   });
 
+  // Issue #35 (R3, from #36): a last entry with no `max` key at all already
+  // fails the schema's `required` check; `checkThresholds` must not also
+  // emit its own redundant "got undefined" message for the same entry.
+  it("rejects a last threshold entry missing its max key with only the schema's required-property error", () => {
+    const doc = loadFixture(
+      "invalid/subscription-threshold-last-missing-max/subscription.yaml",
+    );
+    const expected = loadExpectedErrors(
+      "invalid/subscription-threshold-last-missing-max/expected-errors.json",
+    );
+    const errors = validateSubscription(doc, "subscription.yaml");
+
+    expect(errors.every((error) => error.file === "subscription.yaml")).toBe(
+      true,
+    );
+    expect(errors.some((error) => error.message.includes("got undefined"))).toBe(
+      false,
+    );
+    for (const expectation of expected) {
+      expect(
+        errors.some(
+          (error) =>
+            error.field === expectation.field &&
+            error.message.includes(expectation.message),
+        ),
+      ).toBe(true);
+    }
+  });
+
   it("rejects an empty thresholds list, naming the field", () => {
     const doc = loadFixture(
       "invalid/subscription-threshold-empty/subscription.yaml",

@@ -1,0 +1,3 @@
+[
+  { "field": "budgetClass.thresholds.3.max", "message": "must have required property 'max'" }
+]
