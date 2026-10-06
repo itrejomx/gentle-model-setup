@@ -29,32 +29,62 @@ without the engine ever seeing runtime detail.
 ### Requirement: Agent map entry counts match verified counts
 
 Each runtime's `agentMap` MUST contain exactly the verified number of
-entries: Pi 24, OpenCode 21, Claude Code 19, Codex 17.
+entries, verified 2026-10-06 against the Gentle AI 4.0 installs: Pi 10,
+OpenCode 13, Claude Code 8, Codex 7. The Codex count is pending: its install
+predates Gentle AI 4.0, and `data/runtimes/codex.yaml` MUST state in its
+header that it awaits a `gentle-ai sync` for Codex.
 
-#### Scenario: Pi's agent map has 24 entries
+#### Scenario: Pi's agent map has 10 entries
 
 - GIVEN `data/runtimes/pi.yaml`
 - WHEN its `agentMap` entries are counted
-- THEN the count is exactly 24
+- THEN the count is exactly 10
+
+#### Scenario: OpenCode maps all 13 phases
+
+- GIVEN `data/runtimes/opencode.yaml`
+- WHEN its `agentMap` values are inspected
+- THEN they are exactly the 13 canonical phase ids, including
+  `gentle-orchestrator` and `review-validator`, which no other runtime maps
+
+#### Scenario: OpenCode's gentleman agent is not a phase
+
+- GIVEN OpenCode's primary persona agent `gentleman`, which has no model of
+  its own
+- WHEN `data/runtimes/opencode.yaml`'s `agentMap` is inspected
+- THEN it has no `gentleman` entry
+
+#### Scenario: Codex is marked pending a sync
+
+- GIVEN `data/runtimes/codex.yaml`
+- WHEN its header and `agentMap` are inspected
+- THEN the header states it awaits a `gentle-ai sync` for Codex, and the map
+  holds the 7 non-`sdd` entries of the pre-4.0 install
 
 #### Scenario: A wrong Claude Code count fails naming the file
 
-- GIVEN `data/runtimes/claude-code.yaml` declares only 18 `agentMap` entries
+- GIVEN `data/runtimes/claude-code.yaml` declares only 7 `agentMap` entries
 - WHEN the file is validated against its expected count
 - THEN validation fails, naming `claude-code.yaml` and stating the expected
-  count of 19
+  count of 8
 
 ### Requirement: Runtime-specific agent naming
 
 An `agentMap` entry MUST map a runtime's own agent name to a canonical phase
 name, even when the spellings differ.
 
-#### Scenario: Pi's sdd-proposal maps to the canonical sdd-propose
+#### Scenario: No runtime maps a retired sdd agent
 
-- GIVEN `data/runtimes/pi.yaml`
-- WHEN its `agentMap` is inspected
-- THEN it contains an entry mapping runtime name `sdd-proposal` to canonical
-  phase `sdd-propose`
+- GIVEN the four runtime files
+- WHEN each `agentMap` key and value is inspected
+- THEN none starts with `sdd-`, and every value is one of the 13 canonical
+  phase ids
+
+#### Scenario: Every canonical phase is mapped by some runtime
+
+- GIVEN the four committed runtime files
+- WHEN the union of their `agentMap` values is taken
+- THEN it equals the set of phase ids in `data/phases/phases.yaml`
 
 #### Scenario: An absent runtime phase is simply omitted
 

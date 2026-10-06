@@ -9,7 +9,7 @@
 ## Problem Statement
 
 I use Gentle AI with several AI coding subscriptions. Every Gentle AI Phase
-(the SDD steps, the Judgment Day judges, the reviewers, the workers) needs a
+(the orchestrator, the Judgment Day judges and fix agent, the review lenses, the workers) needs a
 model, and picking well depends on things I have to hold in my head: which
 models my Subscriptions and Plans actually expose, how much quota each one
 carries, which ones run out after a hundred requests, which Lab trained
@@ -60,7 +60,7 @@ rules are the asset; the numbers are data that a checker keeps fresh.
 
 ### Subscriber: reading the Profile
 
-12. As a subscriber, I want one row per Phase, grouped as orchestration, SDD, Judgment Day, review, and workers, so that I can find the Phase I care about.
+12. As a subscriber, I want one row per Phase, grouped as orchestration, Judgment Day, review, and workers, so that I can find the Phase I care about.
 13. As a subscriber, I want each row to show the primary model with its provider prefix, so that I can paste the exact id my runtime expects.
 14. As a subscriber, I want each row to show the recommended effort, so that I know whether to force high reasoning or leave the default.
 15. As a subscriber, I want each row to show its Fallback Chain in order, so that I can fill the fallback slots in the Gentle AI TUI without guessing.
@@ -148,7 +148,7 @@ rules are the asset; the numbers are data that a checker keeps fresh.
 - A Subscription declares its provider prefix, its Billing Model (`capped` or `metered`), the thresholds that derive Budget Class, the catalog source for the checker, and its Plans if capped. Launch Subscriptions: OpenAI as ChatGPT via Codex only, OpenCode Go, Mistral, OpenRouter, Kimi coding plan. An OpenAI API-key Subscription is a separate later entry.
 - A model file carries Lab, Strengths (six ordinal 0 to 3 ratings; a 3 must cite evidence), privacy flags (trains on data, log retention days), effort variants, status (`current`, `legacy`, `experimental`), and evidence. On a capped Subscription it carries a per-Plan map of evidence; a Plan absent from the map means the model isn't offered there.
 - Budget Class is never stored. It is derived at load time from evidence and the Subscription's thresholds, per Plan on capped Subscriptions and once from price on metered ones. This is ADR 0001. Lab is inferred from the model, never from the provider prefix.
-- Phases are the 27-agent union across Pi, OpenCode, Claude Code, and Codex, each with a call pattern (`one-shot` or `loop`), Strength weights, and an Independence role (`implementer`, `verifier`, `judge-a`, `judge-b`, `neutral`).
+- Phases are the 13-agent union (the Gentle AI 4.0 ODD roster) across Pi, OpenCode, Claude Code, and Codex, each with a call pattern (`one-shot` or `loop`), Strength weights, and an Independence role (`implementer`, `verifier`, `judge-a`, `judge-b`, `neutral`).
 - A Runtime Mapping per runtime lists which Phases the runtime has and under what name, and translates provider prefixes. Exporters apply it; the engine never sees it.
 - An Override is keyed by Tier and Phase and carries a `requires` list of Subscriptions (subset match), the model, effort, reason, author, and pull request. The longer `requires` wins; equal length for the same Tier and Phase is a CI error.
 
@@ -157,10 +157,10 @@ rules are the asset; the numbers are data that a checker keeps fresh.
 - A pure TypeScript package with zero runtime dependencies and no I/O. One entry point takes the selection (Subscriptions with Plans, Tier, constraints, Pins) and returns a Profile.
 - Per Phase, in dependency order with implementers first: build the candidate pool from `current` models across the chosen Subscriptions and Plans, prune by constraints; score by weighted Strengths shifted by Tier; apply the winning Override, then any Pin; run the Independence pass; build the Fallback Chain.
 - Budget Class is a hard filter against call pattern for every Subscription. A sniper never enters a loop Phase as primary or fallback.
-- Independence is a three-rung ladder: lab-independent, model-independent, context-independent. Verifiers and judges climb it against the apply primary; judge B also climbs it against judge A. Only the last rung raises a warning. Inside rung 1, verifier and judge roles prefer a Lab that holds no other row in the Profile.
+- Independence is a three-rung ladder: lab-independent, model-independent, context-independent. Verifiers and judges climb it against the `gentle-ai-worker` primary; judge B also climbs it against judge A. Only the last rung raises a warning. Inside rung 1, verifier and judge roles prefer a Lab that holds no other row in the Profile.
 - Effort: sniper and semi always default in every Tier; workhorse and volume get high only in HIGH and only when the variant exists; BALANCED and LEAN always default.
 - Ties break by Budget Class fit, then untouched Lab, then cheaper model. A model offered by two of the user's Subscriptions is two candidates; between them prefer higher Budget Class for the call pattern, then capped over metered, then the Subscription already holding more rows.
-- Fallback Chains are plain ordered lists of two to ten models with no conditions. Verifier and judge fallbacks are validated against the apply primary and apply's first fallback. Conditional advice becomes a Reason Factor, never engine logic.
+- Fallback Chains are plain ordered lists of two to ten models with no conditions. Verifier and judge fallbacks are validated against the `gentle-ai-worker` primary and its first fallback. Conditional advice becomes a Reason Factor, never engine logic.
 - Overrides beat rules but not invariants. Pins beat both but not invariants. A Pin outside the pool is reported and ignored. An Override whose model was pruned by constraints is skipped and reported.
 - Output rows carry reasons and warnings as typed Reason Factors, code plus parameters. The engine emits no prose and no language.
 - Unsatisfiable Independence yields a warning and the best available pick, never an empty row. A Phase with no candidate yields a row that says so and names the cheapest Subscription that would fill it.
@@ -210,5 +210,5 @@ There is no prior art in this repository; it is empty apart from docs. The prope
 
 - Build order: data schema and the OpenCode Go catalog first, engine with invariant and scenario tests second, site third, checker last. The site is useful the moment the engine resolves a real catalog; the checker earns its keep once there's something to keep fresh.
 - The second source document lives in a volatile macOS cache path. Copy both into repo fixtures early, as classification evidence, not as expected outputs.
-- Runtime agent counts verified on 2026-09-14: Pi 24, OpenCode 20, Claude Code 18, Codex 17. Pi spells `sdd-proposal` and prefixes OpenAI models as `openai-codex/`. Any future count change is a Runtime Mapping change, not an engine change.
+- Runtime agent counts re-verified on 2026-10-06 against the Gentle AI 4.0 installs (issue #40): Pi 10, OpenCode 13, Claude Code 8, Codex 7. Codex's install predates 4.0 and awaits a `gentle-ai sync`. Pi prefixes OpenAI models as `openai-codex/`. Any future count change is a Runtime Mapping change, not an engine change.
 - Vocabulary is fixed in `CONTEXT.md`. Profile is the output, Tier is HIGH/BALANCED/LEAN, Budget Class is sniper/semi/workhorse/volume, Plan is what you pay a provider for. Please keep code, tests, and copy on those words.

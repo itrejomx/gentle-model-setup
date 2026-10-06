@@ -6,7 +6,7 @@
 
 ## 1. Problem
 
-Gentle AI runs SDD and Judgment Day phases through named sub-agents. Each phase
+Gentle AI runs its orchestrator, Judgment Day, review, and worker phases through named sub-agents. Each phase
 needs a model assignment, and the right assignment depends on which
 subscriptions the user has, how much quota each model carries, and a set of
 invariants (sniper models only in one-shot roles, verifiers and judges never from
@@ -52,20 +52,21 @@ of scope here.
 ### 3.2 Phase parameters
 
 The canonical phase set is the union of every Gentle AI agent that carries a
-model assignment across the supported runtimes (verified 2026-09-14 against
-Pi, OpenCode, Claude Code, and Codex installs): 27 rows.
+model assignment across the supported runtimes, rescoped 2026-10-06 to the
+Gentle AI 4.0 roster, which retired SDD (see #40): 13 rows in four groups.
 
 | Group | Phases | Default role |
 |---|---|---|
 | Orchestration | `gentle-orchestrator` | neutral, loop |
-| SDD | `sdd-init`, `sdd-explore`, `sdd-research`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-remediate`, `sdd-verify`, `sdd-archive`, `sdd-onboard`, `sdd-status`, `sdd-sync` | `sdd-apply` and `sdd-remediate` are implementers; `sdd-verify` is a verifier; the rest neutral |
 | Judgment Day | `jd-judge-a`, `jd-judge-b`, `jd-fix-agent` | judge-a, judge-b, implementer |
 | Review | `review-risk`, `review-readability`, `review-reliability`, `review-resilience`, `review-refuter`, `review-validator` | verifiers |
 | Workers | `gentle-ai-explore`, `gentle-ai-verify`, `gentle-ai-worker` | neutral, verifier, implementer |
 
-No single runtime has all 27. Pi has 24, OpenCode 21, Claude Code 19, Codex
-17, and Pi names one differently (`sdd-proposal`). Runtime presence and
-naming live in per-runtime mappings (section 4), never in the engine.
+Only OpenCode has all 13. Pi has 10, OpenCode 13, Claude Code 8, and Codex 7
+(Codex's install predates Gentle AI 4.0 and awaits a `gentle-ai sync`).
+OpenCode's `gentleman` primary agent has no model of its own and is not a
+Phase. Runtime presence and naming live in per-runtime mappings (section 4),
+never in the engine.
 
 | Parameter | Values | Purpose |
 |---|---|---|
@@ -97,8 +98,8 @@ reasons about money (see ADR 0001).
 ### 3.5 Invariants
 
 1. A `sniper` never enters a `loop` phase, as primary or fallback.
-2. `sdd-verify`, `jd-judge-a`, and `jd-judge-b` reach the highest available
-   rung of the independence ladder against the `sdd-apply` primary:
+2. `gentle-ai-verify`, `jd-judge-a`, and `jd-judge-b` reach the highest available
+   rung of the independence ladder against the `gentle-ai-worker` primary:
    lab-independent, then model-independent, then context-independent. Only
    the last rung produces a warning.
 3. `jd-judge-b` climbs the same ladder against `jd-judge-a`.
@@ -131,10 +132,10 @@ data/
 - **subscriptions/**: id, display name, provider prefix, budget derivation
   rule and thresholds, catalog source URL for the checker, plan tiers offered.
 - **models/**: one file per model per subscription, fields from 3.1.
-- **phases/**: the 27 canonical rows with fields from 3.2.
+- **phases/**: the 13 canonical rows with fields from 3.2.
 - **runtimes/**: one file per runtime (`opencode`, `pi`, `claude-code`,
-  `codex`) with an agent map (runtime agent name → canonical phase, so Pi's
-  `sdd-proposal` maps to `sdd-propose`; absent phases are simply not listed)
+  `codex`) with an agent map (runtime agent name → canonical phase; absent
+  phases are simply not listed)
   and a prefix map (subscription provider prefix → runtime prefix, so
   `openai/` becomes `openai-codex/` on Pi). The exporter applies these; the
   engine never sees them.
@@ -185,12 +186,12 @@ Per phase, in dependency order (implementers first):
 5. **Fallback chain**: the next survivors in score order, at least two and at
    most ten, same filters. A plain ordered list; the Gentle AI TUI has no
    conditional fallbacks. Verifier and judge fallbacks are validated against
-   the apply primary and against apply's first fallback, the most likely
-   runtime substitution. Conditional advice ("if apply falls to X, switch
-   verify to Y") is emitted as a sentence in `reason`, never as engine logic.
+   the `gentle-ai-worker` primary and against its first fallback, the most
+   likely runtime substitution. Conditional advice ("if the worker falls to
+   X, switch verify to Y") is emitted as a sentence in `reason`, never as engine logic.
    An empty chain is an error.
 
-Output: `Profile` with 27 `ProfileRow`s, each `{ phase, primary, effort,
+Output: `Profile` with 13 `ProfileRow`s, each `{ phase, primary, effort,
 fallbacks, reasons, warnings, override?, pin? }`. `reasons` and `warnings`
 are lists of typed factors, a code plus parameters (for example
 `lab-independent`, `budget-fit`, `untouched-lab`, `override-applied`,
@@ -209,14 +210,14 @@ Flow:
 1. **Pick**: subscription checkboxes, a Plan selector for each checked
    capped subscription (metered ones have none), tier toggle, two constraint
    switches. Selection encoded in the URL.
-2. **Profile**: the 27 rows grouped as in 3.2, expandable for reason and
+2. **Profile**: the 13 rows grouped as in 3.2, expandable for reason and
    warning, with a runtime filter that hides rows the chosen runtime lacks. Override
    rows carry a badge linking to the override PR. Each row can be pinned to
    any model in the pool; pins are personal, go in the URL, and show a badge
    plus any warning the pin caused.
 3. **Take it home**: three tabs.
    - **Files**: zip with (a) an OpenCode JSON fragment of the
-     `sdd-{phase}-{profile}` agent entries for every phase OpenCode has, in
+     agent entries for every phase OpenCode has, in
      the exact shape Gentle AI generates (`model`, `variant`), with fallback
      chains in a sidecar file because the agent entry has no fallback field;
      (b) Pi agent markdown files with `model:` frontmatter for every phase Pi
