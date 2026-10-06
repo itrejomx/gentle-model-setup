@@ -19,7 +19,7 @@
             "pattern": "^[a-z0-9][a-z0-9.\\-]*$"
           },
           "group": {
-            "enum": ["orchestration", "sdd", "judgment-day", "review", "workers"]
+            "enum": ["orchestration", "judgment-day", "review", "workers"]
           },
           "callPattern": {
             "enum": ["one-shot", "loop"]

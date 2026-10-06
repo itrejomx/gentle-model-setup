@@ -1,6 +1,6 @@
 phases:
   - id: sdd-apply
-    group: sdd
+    group: workers
     callPattern: loop
     role: implementer
     weights:
@@ -11,7 +11,7 @@ phases:
       multimodal: 0
       cheap: 0.1
   - id: sdd-verify
-    group: sdd
+    group: workers
     callPattern: one-shot
     role: verifier
     weights:

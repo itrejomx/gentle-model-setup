@@ -4,37 +4,12 @@ import { describe, expect, it } from "vitest";
 import { readYamlFile, validatePhases } from "../src/index.js";
 
 /**
- * The 27 canonical Gentle AI phase ids, grouped and named exactly as listed
- * in docs/superpowers/specs/2026-09-14-model-profile-site-design.md, section
- * 3.2 "Phase parameters" (the design spec table, lines 58-64) — the design
- * spec the PRD names as its source (docs/prd/2026-09-14-model-profile-site.md).
- *
- * This is the only document in the repository that enumerates all 27 ids.
- * The frozen openspec reference for this slice
- * (openspec/changes/scaffold-data-contract-go-catalog/design.md) gives only
- * one example row (`sdd-apply`); its canonical-phases/spec.md states the
- * count (27) and a role-assignment summary rule, but names no id list at
- * all. Deriving the ids from anywhere else would be inventing them, which
- * the slice 8 instructions explicitly forbid.
+ * The 13 canonical Gentle AI phase ids: the non-`sdd` rows of the Gentle AI
+ * 4.0 roster (release 2026-10-01), which retired SDD. Maintainer decision
+ * 2026-10-06 (issue #40): the canonical set is the 13 ids that survive 4.0,
+ * unioned across runtimes.
  */
 const ORCHESTRATION_IDS = ["gentle-orchestrator"] as const;
-
-const SDD_IDS = [
-  "sdd-init",
-  "sdd-explore",
-  "sdd-research",
-  "sdd-propose",
-  "sdd-spec",
-  "sdd-design",
-  "sdd-tasks",
-  "sdd-apply",
-  "sdd-remediate",
-  "sdd-verify",
-  "sdd-archive",
-  "sdd-onboard",
-  "sdd-status",
-  "sdd-sync",
-] as const;
 
 const JUDGMENT_DAY_IDS = ["jd-judge-a", "jd-judge-b", "jd-fix-agent"] as const;
 
@@ -55,7 +30,6 @@ const WORKER_IDS = [
 
 const CANONICAL_PHASE_IDS: readonly string[] = [
   ...ORCHESTRATION_IDS,
-  ...SDD_IDS,
   ...JUDGMENT_DAY_IDS,
   ...REVIEW_IDS,
   ...WORKER_IDS,
@@ -72,7 +46,7 @@ const STRENGTH_AXES = [
 
 const CALL_PATTERNS = ["one-shot", "loop"] as const;
 const ROLES = ["implementer", "verifier", "judge-a", "judge-b", "neutral"] as const;
-const GROUPS = ["orchestration", "sdd", "judgment-day", "review", "workers"] as const;
+const GROUPS = ["orchestration", "judgment-day", "review", "workers"] as const;
 
 interface PhaseEntry {
   id: string;
@@ -108,15 +82,25 @@ describe("canonical phases", () => {
     expect(validatePhases(doc, phasesPath)).toEqual([]);
   });
 
-  it("has exactly 27 rows", () => {
+  it("has exactly 13 rows", () => {
     const doc = loadPhases();
-    expect(doc.phases.length).toBe(27);
+    expect(doc.phases.length).toBe(13);
   });
 
-  it("has ids matching the canonical 27-id list", () => {
+  it("has ids matching the canonical 13-id list", () => {
     const doc = loadPhases();
     const ids = doc.phases.map((phase) => phase.id).sort();
     expect(ids).toEqual([...CANONICAL_PHASE_IDS].sort());
+  });
+
+  // Issue #40: SDD is retired in Gentle AI 4.0, so `sdd` is no longer a
+  // valid group. The doc is a real row with only its group changed.
+  it("rejects a row whose group is the retired sdd group, naming the field", () => {
+    const doc = loadPhases();
+    const row = findPhase(doc, "gentle-orchestrator");
+    const retired = { phases: [{ ...row, group: "sdd" }] };
+    const errors = validatePhases(retired, phasesPath);
+    expect(errors.some((error) => error.field === "phases.0.group")).toBe(true);
   });
 
   it("has unique ids", () => {
@@ -155,18 +139,6 @@ describe("canonical phases", () => {
   );
 
   // The following pin the canonical-phases/spec.md scenarios directly.
-  it("sdd-apply is an implementer in a loop", () => {
-    const doc = loadPhases();
-    const phase = findPhase(doc, "sdd-apply");
-    expect(phase.callPattern).toBe("loop");
-    expect(phase.role).toBe("implementer");
-  });
-
-  it("sdd-verify is a verifier", () => {
-    const doc = loadPhases();
-    expect(findPhase(doc, "sdd-verify").role).toBe("verifier");
-  });
-
   it("gentle-orchestrator does not claim a special role", () => {
     const doc = loadPhases();
     const phase = findPhase(doc, "gentle-orchestrator");
@@ -186,11 +158,6 @@ describe("canonical phases", () => {
     it.each(ORCHESTRATION_IDS)("%s belongs to group orchestration", (id) => {
       const doc = loadPhases();
       expect(findPhase(doc, id).group).toBe("orchestration");
-    });
-
-    it.each(SDD_IDS)("%s belongs to group sdd", (id) => {
-      const doc = loadPhases();
-      expect(findPhase(doc, id).group).toBe("sdd");
     });
 
     it.each(JUDGMENT_DAY_IDS)("%s belongs to group judgment-day", (id) => {
@@ -228,11 +195,21 @@ describe("canonical phases", () => {
     expect(findPhase(doc, "gentle-ai-verify").role).toBe("verifier");
   });
 
-  it("sdd-remediate runs in a loop, by analogy with sdd-apply", () => {
+  it("gentle-ai-explore is neutral", () => {
     const doc = loadPhases();
-    const phase = findPhase(doc, "sdd-remediate");
-    expect(phase.callPattern).toBe("loop");
-    expect(phase.role).toBe("implementer");
+    expect(findPhase(doc, "gentle-ai-explore").role).toBe("neutral");
+  });
+
+  it.each([
+    "review-risk",
+    "review-readability",
+    "review-reliability",
+    "review-resilience",
+    "review-refuter",
+    "review-validator",
+  ])("%s is a verifier", (id) => {
+    const doc = loadPhases();
+    expect(findPhase(doc, id).role).toBe("verifier");
   });
 
   // T9.6: every weights map sums to 1.0 exactly, per the phases.yaml header
