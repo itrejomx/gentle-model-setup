@@ -1,11 +1,11 @@
 # Model Profile Site
 
-A community site that resolves which model each Gentle AI SDD and Judgment Day phase should use, given the subscriptions a user holds.
+A community site that resolves which model each Gentle AI phase should use, given the subscriptions a user holds.
 
 ## Language
 
 **Profile**:
-The resolved set of fourteen phase-to-model assignments, each with effort and fallbacks. Matches the Gentle AI TUI concept.
+The resolved set of thirteen phase-to-model assignments, each with effort and fallbacks. Matches the Gentle AI TUI concept.
 _Avoid_: config, setup, preset
 
 **Tier**:
@@ -53,7 +53,7 @@ A typed code with parameters that explains one part of why a row resolved as it 
 _Avoid_: reason string, explanation, note
 
 **Phase**:
-One of the 27 canonical Gentle AI agents that receives a model assignment, the union across all supported runtimes. A Profile has one row per Phase.
+One of the 13 canonical Gentle AI agents (the ODD roster: orchestrator, Judgment Day judges and fix agent, review lenses, and the explorer, verifier, and worker), the union across all supported runtimes. A Profile has one row per Phase.
 _Avoid_: agent, step, stage, row
 
 **Runtime Mapping**:
