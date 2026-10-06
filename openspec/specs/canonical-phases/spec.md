@@ -68,6 +68,20 @@ Every phase entry MUST declare `callPattern` (`one-shot` | `loop`), a
 - WHEN it is inspected
 - THEN `callPattern: loop` and `role: neutral`
 
+#### Scenario: gentle-ai-worker is the implementer loop
+
+- GIVEN the `gentle-ai-worker` phase entry
+- WHEN it is inspected
+- THEN `callPattern: loop` and `role: implementer`, because the worker
+  iterates test-first inside each delegated task and consumes requests in a
+  burst (ADR 0001)
+
+#### Scenario: Only the orchestrator and the worker are loop phases
+
+- GIVEN all 13 phase entries
+- WHEN the entries with `callPattern: loop` are collected
+- THEN they are exactly `gentle-orchestrator` and `gentle-ai-worker`
+
 #### Scenario: A phase entry missing weights fails naming the field
 
 - GIVEN a phase entry for `jd-judge-b` with no `weights` map

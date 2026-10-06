@@ -131,8 +131,10 @@ phases:
 
   - id: gentle-ai-worker
     group: workers
-    callPattern: one-shot
+    callPattern: loop
     role: implementer
-    # Bounded delegated writer for one task per invocation, not a
-    # continuous loop; coding tools dominate.
+    # Bounded delegated writer for one task per invocation, but it iterates
+    # test-first inside that task (RED, GREEN, refactor, pre-commit review),
+    # so it consumes requests in a burst: a loop Phase under ADR 0001
+    # (maintainer decision 2026-10-06, issue #40). Coding tools dominate.
     weights: { oneShotReasoning: 0.1, sustainedReasoning: 0.15, codingTools: 0.45, longContext: 0.2, multimodal: 0, cheap: 0.1 }
