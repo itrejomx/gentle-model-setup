@@ -52,11 +52,11 @@ rewrites them after this lands, with the maintainer's go-ahead).
 ## Tasks
 
 Slice A (branch `feat/40-phase-set-gentle-ai-4`), route: delegated, one writer.
-- [ ] T1 RED: `phases.test.ts` asserts exactly the 13 ids, count 13, groups `orchestration`, `judgment-day`, `review`, `workers`, and the roles listed in the issue; observe the failure against the 27-row file. GREEN: remove the 14 `sdd-*` rows from `phases.yaml`; update its header comments (count, source: Gentle AI 4.0 roster, decision date).
-- [ ] T2 RED: a fixture with `group: sdd` must be rejected by `validatePhases`. GREEN: drop `sdd` from the `group` enum in `phases.schema.json`.
-- [ ] T3 RED: `runtime-mappings.test.ts` asserts Pi 10, OpenCode 13, Claude Code 8, Codex `<n>` (the count after dropping `sdd-*`), and that no `agentMap` value is an `sdd-*` id. GREEN: rewrite the four runtime files from the installs; Pi drops the `sdd-proposal` alias; Codex header states the pending sync; the OpenCode comment explains why `gentleman` is excluded.
-- [ ] T4 `load-data.test.ts` and any other test pinning 27 or the old per-runtime counts follow (`rg -n "\b27\b|\b24\b|\b21\b|\b19\b|\b17\b" packages/data/test`).
-- [ ] T5 Verify: `pnpm -r typecheck`; `pnpm validate`; `pnpm test`; `pnpm build` and record the NEW bundle hash (it changes: the payload changed); `rg -n "sdd-" data packages/data/test` returns only intentional negative fixtures, if any.
+- [x] T1 RED: `phases.test.ts` asserts exactly the 13 ids, count 13, groups `orchestration`, `judgment-day`, `review`, `workers`, and the roles listed in the issue; observe the failure against the 27-row file. GREEN: remove the 14 `sdd-*` rows from `phases.yaml`; update its header comments (count, source: Gentle AI 4.0 roster, decision date).
+- [x] T2 RED: a fixture with `group: sdd` must be rejected by `validatePhases`. GREEN: drop `sdd` from the `group` enum in `phases.schema.json`.
+- [x] T3 RED: `runtime-mappings.test.ts` asserts Pi 10, OpenCode 13, Claude Code 8, Codex `<n>` (the count after dropping `sdd-*`), and that no `agentMap` value is an `sdd-*` id. GREEN: rewrite the four runtime files from the installs; Pi drops the `sdd-proposal` alias; Codex header states the pending sync; the OpenCode comment explains why `gentleman` is excluded.
+- [x] T4 `load-data.test.ts` and any other test pinning 27 or the old per-runtime counts follow (`rg -n "\b27\b|\b24\b|\b21\b|\b19\b|\b17\b" packages/data/test`).
+- [x] T5 Verify: `pnpm -r typecheck`; `pnpm validate`; `pnpm test`; `pnpm build` and record the NEW bundle hash (it changes: the payload changed); `rg -n "sdd-" data packages/data/test` returns only intentional negative fixtures, if any.
 
 Slice B (branch `docs/40-phase-set-docs` from slice A), route: delegated, one writer.
 - [ ] T6 `CONTEXT.md`: Profile = thirteen phase-to-model assignments; Phase = one of the 13 canonical Gentle AI agents (ODD roster); no SDD wording.
@@ -74,10 +74,19 @@ From #40: exactly the 13 Phases; a `group: sdd` row fails validation; runtime fi
 new hash is recorded; glossary, PRD, design spec, and main specs state 13 Phases; no `sdd-*` id
 outside `openspec/changes/archive/`.
 
+## Rationale for accepted judgment calls
+
+- One commit for T1-T4: Phases and Runtime Mappings are one contract under the integrity check.
+- Rosters recorded from the installs on 2026-10-06: Claude Code the eight agent files dated 2026-10-04 (the `sdd-*.md` leftovers were not mapped); OpenCode the 14 base keys minus `gentleman`; Pi the 10 agent files dated 2026-10-04, `sdd-proposal` alias gone; Codex the seven non-`sdd` entries of an install dated 2026-07-20, header marked pending a `gentle-ai sync`.
+- Test fixtures that use `sdd-*` strings as arbitrary ids were left alone: renaming them touches `validate.test.ts` and the override fixtures for no behavioral gain. Cosmetic follow-up at most.
+- The T2 schema test lives in `phases.test.ts` (inline document) rather than `validate.test.ts`.
+
 ## Progress
 
 - 2026-10-06: document created on branch `feat/40-phase-set-gentle-ai-4` from `main` (`d9c25ca`).
+- 2026-10-06: slice A (T1-T5) implemented by one delegated writer in one commit, `0799aa5` (`feat(data)!`): the cross-file integrity check rejects an `agentMap` value that is not a Phase id, so the Phase removal and the runtime rewrite cannot be green apart. Observed RED: T1 `expected 27 to be 13` with the 14 `sdd-*` ids as the list diff; T2 `expected false to be true` for a `group: sdd` row; T3 the four counts (`24→10`, `21→13`, `19→8`, `17→7`), the no-`sdd-` assertion on all four runtimes, and 46 cross-file integrity errors; T4 `load-data` 27→13. The new role assertions for `gentle-ai-explore` and the review lenses pin behavior that already held; no mutation was run for them. Observed GREEN: phases 95/95; `pnpm -r typecheck` clean; `pnpm validate` exit 0; `pnpm test` 20 files, 507/507 (583 before: the per-Phase cases shrank with the roster); new bundle hash `13f9e5a9cc0931e887ccc180f949515077ad2e9068b939dea1654f059e5d8b8b`.
+- 2026-10-06: parent gate. Reflog clean; `.gga` untracked; 14 files vs `main`, all inside the slice except `packages/data/test/fixtures/valid/phases/phases.yaml`, where the writer changed two `group: sdd` rows to `group: workers` because the retired enum value broke the valid fixture. Accepted: minimal, reported, and the only way to keep `validate.test.ts` green. Re-run by the parent: counts 13 / Pi 10 / OpenCode 13 / Claude Code 8 / Codex 7; typecheck clean; validate exit 0; 507/507; hash `13f9e5a9...`. Remaining `sdd` hits are intentional: file headers that explain the retirement, the negative assertion, test fixtures that use `sdd-*` strings as arbitrary ids, and model-file citations of the source document `perfiles-sdd-opencode-go-only-v2.2.md`.
 
 ## Next step
 
-Slice A, T1-T5, delegated to one writer.
+Native review for slice A (`--base-ref origin/main --committed-only`), then on the maintainer's go-ahead push and open its PR against `main` (`Refs #40`, breaking data change). Then slice B on `docs/40-phase-set-docs`.
