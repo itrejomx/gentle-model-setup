@@ -1,6 +1,6 @@
 phases:
   - id: sdd-apply
-    group: sdd
+    group: workers
     callPattern: loop
     role: implementer
     weights:

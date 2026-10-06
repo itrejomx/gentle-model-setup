@@ -2,23 +2,16 @@
 # Code's live `~/.claude/agents/` install carries, what Claude Code calls
 # them, and how Claude Code spells subscription provider prefixes.
 #
-# `agentMap` was read (read-only, T9.1) from the 19 `*.md` files under
-# `~/.claude/agents/` on 2026-09-17: one entry per file basename, mapped to
-# its canonical phase id (data/phases/phases.yaml) — every entry is an
-# identity mapping, since Claude Code already spells `sdd-propose` (and
-# every other phase name) canonically. This count (19) includes
-# `sdd-research`, which the design spec text
-# (docs/superpowers/specs/2026-09-14-model-profile-site-design.md, "Claude
-# Code 18") predates; the frozen openspec design.md's own worked example
-# comment ("Pi 24, OpenCode 20, Claude Code 19, Codex 17") already matches
-# this file's Claude Code count but is now stale on OpenCode too: OpenCode
-# is 21, not 20, per the maintainer decision recorded in
-# packages/data/test/runtime-mappings.test.ts (`gentle-orchestrator`,
-# 2026-09-17). Claude Code's install has no
-# `gentle-orchestrator`, `gentle-ai-explore`, `gentle-ai-verify`,
-# `gentle-ai-worker`, `review-validator`, `sdd-remediate`, `sdd-status`, or
-# `sdd-sync` file; those canonical phases are simply omitted, which the spec
-# states is not a validation error.
+# `agentMap` was re-read (read-only, issue #40) from `~/.claude/agents/` on
+# 2026-10-06, after the Gentle AI 4.0 release (2026-10-01). Only the eight
+# `*.md` files written by the 4.0 install (mtime 2026-10-04) are mapped:
+# one entry per file basename, each an identity mapping to its canonical
+# phase id (data/phases/phases.yaml). The `sdd-*.md` files in that directory
+# are pre-4.0 leftovers the install preserved; they are not Phases and are
+# not mapped. Claude Code's install has no `gentle-orchestrator`,
+# `gentle-ai-explore`, `gentle-ai-verify`, `gentle-ai-worker`, or
+# `review-validator` file; those canonical phases are simply omitted, which
+# the spec states is not a validation error.
 #
 # `prefixMap` translates `opencode-go` (the one committed subscription's
 # `providerPrefix`, data/subscriptions/opencode-go.yaml) as an identity
@@ -35,16 +28,5 @@ agentMap:
   review-reliability: review-reliability
   review-resilience: review-resilience
   review-risk: review-risk
-  sdd-apply: sdd-apply
-  sdd-archive: sdd-archive
-  sdd-design: sdd-design
-  sdd-explore: sdd-explore
-  sdd-init: sdd-init
-  sdd-onboard: sdd-onboard
-  sdd-propose: sdd-propose
-  sdd-research: sdd-research
-  sdd-spec: sdd-spec
-  sdd-tasks: sdd-tasks
-  sdd-verify: sdd-verify
 prefixMap:
   opencode-go: opencode-go

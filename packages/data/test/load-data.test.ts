@@ -18,13 +18,13 @@ describe("loadData over the committed data/ tree (T10.13)", () => {
     const dataSet = await loadData(dataRoot);
 
     // Counts per the acceptance criteria: 1 subscription, 29 catalog
-    // models, 27 canonical phases, 4 runtime mappings, and 0 overrides
+    // models, 13 canonical phases, 4 runtime mappings, and 0 overrides
     // (this change ships no override data — bundle spec, "Overrides
     // collection is empty in this change"; data/overrides/ does not even
     // exist yet).
     expect(dataSet.subscriptions.length).toBe(1);
     expect(dataSet.models.length).toBe(29);
-    expect(dataSet.phases.length).toBe(27);
+    expect(dataSet.phases.length).toBe(13);
     expect(dataSet.runtimes.length).toBe(4);
     expect(dataSet.overrides.length).toBe(0);
   });

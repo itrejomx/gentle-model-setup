@@ -6,22 +6,23 @@ import { checkCrossFileIntegrity, readYamlFile, validateRuntime } from "../src/i
 import type { DataSet, PhaseRecord, SubscriptionRecord } from "../src/types.js";
 
 /**
- * Expected `agentMap` entry counts, verified 2026-09-17 against the live
- * installs at `~/.pi/agent/agents/`, `~/.config/opencode/opencode.json`,
- * `~/.claude/agents/`, and `~/.codex/agents/` (T9.1). Claude Code's count
- * (19) includes `sdd-research`, which the design spec text
- * (docs/superpowers/specs/2026-09-14-model-profile-site-design.md line 66,
- * "Claude Code 18") predates; the live install wins per maintainer decision
- * on 2026-09-14. OpenCode's count (21) includes `gentle-orchestrator` per
- * maintainer decision on 2026-09-17: OpenCode is the only runtime where the
- * orchestrator is a configured agent with its own model; in the other three
- * it is the active session model, so they carry no entry for it.
+ * Expected `agentMap` entry counts, verified 2026-10-06 (issue #40) against
+ * the Gentle AI 4.0 installs at `~/.pi/agent/agents/` (10 files),
+ * `~/.config/opencode/opencode.json` (14 base agent keys, 13 once the
+ * `gentleman` primary persona agent, which has no model of its own, is
+ * excluded), and `~/.claude/agents/` (the 8 files dated 2026-10-04).
+ * Codex's count (7) is the pre-4.0 install minus its `sdd-*` entries: its
+ * `~/.codex/agents/` predates 4.0 and awaits a `gentle-ai sync`.
+ * OpenCode's count includes `gentle-orchestrator`: OpenCode is the only
+ * runtime where the orchestrator is a configured agent with its own model;
+ * in the other three it is the active session model, so they carry no
+ * entry for it.
  */
 const EXPECTED_AGENT_MAP_COUNTS: Record<string, number> = {
-  pi: 24,
-  opencode: 21,
-  "claude-code": 19,
-  codex: 17,
+  pi: 10,
+  opencode: 13,
+  "claude-code": 8,
+  codex: 7,
 };
 
 interface RuntimeDoc {
@@ -45,7 +46,7 @@ function loadRuntime(id: string): RuntimeDoc {
   return readYamlFile(runtimePath(id), dataRoot) as RuntimeDoc;
 }
 
-/** Loads the 27 canonical phase ids straight from `data/phases/phases.yaml`
+/** Loads the canonical phase ids straight from `data/phases/phases.yaml`
  * (T10.10) — never from a list copy-pasted into this test file. */
 function loadPhaseRecords(): PhaseRecord[] {
   const doc = readYamlFile(phasesPath, dataRoot) as { phases: PhaseRecord[] };
@@ -125,11 +126,12 @@ describe("runtime mappings", () => {
     expect(committedIds).toEqual([...RUNTIME_IDS].sort());
   });
 
-  // Pinned scenario from the runtime-mappings spec: Pi's own agent name for
-  // sdd-propose is spelled `sdd-proposal`.
-  it("pi maps its sdd-proposal agent name to the canonical sdd-propose", () => {
-    const doc = loadRuntime("pi");
-    expect(doc.agentMap["sdd-proposal"]).toBe("sdd-propose");
+  // Issue #40: Gentle AI 4.0 retired SDD, so no runtime maps an `sdd-*`
+  // agent name or targets an `sdd-*` phase id.
+  it.each(RUNTIME_IDS)("%s's agentMap has no sdd-* key or value", (id) => {
+    const { agentMap } = loadRuntime(id);
+    const ids = [...Object.keys(agentMap), ...Object.values(agentMap)];
+    expect(ids.filter((name) => name.startsWith("sdd-"))).toEqual([]);
   });
 
   // `gentle-orchestrator` is a canonical phase that only OpenCode can map:

@@ -2,23 +2,28 @@
 # `~/.pi/agent/agents/` install carries, what Pi calls them, and how Pi
 # spells subscription provider prefixes.
 #
-# `agentMap` was read (read-only, T9.1) from the 24 `*.md` files under
-# `~/.pi/agent/agents/` on 2026-09-17: one entry per file basename, mapped to
-# its canonical phase id (data/phases/phases.yaml). Every entry here is an
-# identity mapping except `sdd-proposal`, which Pi spells differently from
-# the canonical `sdd-propose` (runtime-mappings/spec.md's own pinned
-# scenario). Pi's install has no `gentle-orchestrator`, `review-refuter`, or
-# `review-validator` file; those canonical phases are simply omitted, which
-# the spec states is not a validation error.
+# `agentMap` was re-read (read-only, issue #40) from the 10 `*.md` files
+# under `~/.pi/agent/agents/` on 2026-10-06, after the Gentle AI 4.0 release
+# (2026-10-01): one entry per file basename, mapped to its canonical phase id
+# (data/phases/phases.yaml). Every entry is an identity mapping; the pre-4.0
+# `sdd-proposal` alias is gone along with every `sdd-*` agent. Pi's install
+# has no `gentle-orchestrator`, `review-refuter`, or `review-validator`
+# file; those canonical phases are simply omitted, which the spec states is
+# not a validation error.
 #
 # `prefixMap` translates `opencode-go` (the one committed subscription's
 # `providerPrefix`, data/subscriptions/opencode-go.yaml) as an identity
 # mapping, plus the design spec's own worked example
 # (design.md section 4): `openai` -> `openai-codex`. No
 # `data/subscriptions/openai.yaml` (or equivalent) is committed yet — that
-# subscription is PRD stories #4-#7, out of scope for issue #2 — so this
-# entry documents the design spec's illustration rather than a subscription
-# that exists in this repository today.
+# subscription is PRD stories #4-#7 — so this entry documents the design
+# spec's illustration rather than a subscription that exists in this
+# repository today.
+#
+# Pending prefix: Pi's live `~/.pi/agent/subagents.json` also routes to the
+# `mistral` provider. It is deliberately not mapped here, because every
+# `prefixMap` key must be a known Subscription prefix and no Mistral
+# Subscription file exists yet (issue #6). Add it once that file lands.
 id: pi
 displayName: Pi
 agentMap:
@@ -32,20 +37,6 @@ agentMap:
   review-reliability: review-reliability
   review-resilience: review-resilience
   review-risk: review-risk
-  sdd-apply: sdd-apply
-  sdd-archive: sdd-archive
-  sdd-design: sdd-design
-  sdd-explore: sdd-explore
-  sdd-init: sdd-init
-  sdd-onboard: sdd-onboard
-  sdd-proposal: sdd-propose
-  sdd-remediate: sdd-remediate
-  sdd-research: sdd-research
-  sdd-spec: sdd-spec
-  sdd-status: sdd-status
-  sdd-sync: sdd-sync
-  sdd-tasks: sdd-tasks
-  sdd-verify: sdd-verify
 prefixMap:
   opencode-go: opencode-go
   openai: openai-codex

@@ -18,7 +18,7 @@ import type {
  */
 
 const PHASES: PhaseRecord[] = [
-  { id: "sdd-apply", group: "sdd", callPattern: "loop", role: "implementer", weights: {} },
+  { id: "sdd-apply", group: "workers", callPattern: "loop", role: "implementer", weights: {} },
 ];
 
 const SUBSCRIPTIONS: SubscriptionRecord[] = [
