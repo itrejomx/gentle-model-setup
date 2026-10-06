@@ -98,7 +98,8 @@ outside `openspec/changes/archive/`.
 - 2026-10-06: slice B pushed; PR #42 opened against `feat/40-phase-set-gentle-ai-4` (`Refs #40`, 7 files, 146 insertions, 65 deletions); CI job `validate-and-test` passed (run 37539464630).
 - 2026-10-06: slice C (T9b) done inline, commit `765d3d2`. Observed RED: `expected 'one-shot' to be 'loop'` and `expected [ 'gentle-orchestrator' ] to deeply equal [ 'gentle-ai-worker', 'gentle-orchestrator' ]`; GREEN after the data change: phases 97/97, `pnpm test` 20 files 510/510, `pnpm validate` exit 0, new bundle hash `6d9e831c6b3644adf7001295012456a371b3a30401b12c373e65dd3b538c51ce`. Reason recorded on the worker row in `phases.yaml`; `canonical-phases/spec.md` gains the "implementer loop" and "only two loop phases" scenarios; the design table marks the worker `(loop)`.
 - 2026-10-06: slice C native review (assessed `medium`: configuration change in `phases.yaml`) granted by the maintainer, reliability lens, approved and acknowledged with no findings (lineage `review-e4d3940c5e3eb915`, authority burned).
+- 2026-10-06: slice C pushed; PR #43 opened against `docs/40-phase-set-docs` (`Refs #40`, 5 files, 42 insertions, 6 deletions); CI job `validate-and-test` passed (run 37546656161).
 
 ## Next step
 
-On the maintainer's go-ahead push `feat/40-worker-loop` and open its PR stacked on #42. Merge order #41, #42, then this one. Then T10 (issues #3 and #8).
+Maintainer merges #41, then #42 and #43 (retarget each to `main` after its parent merges). T10: rewrite issues #3 and #8 against the 13-row Profile, `gentle-ai-worker` as the loop implementer, and `gentle-ai-verify` plus the judges on the Independence ladder; one issue at a time, with the maintainer's go-ahead on each draft.
