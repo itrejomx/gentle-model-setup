@@ -31,6 +31,13 @@ const STRENGTH_AXES = [
 
 type StrengthAxis = (typeof STRENGTH_AXES)[number];
 
+/** Sentinel `field` value for a schema error with no instance path at all --
+ * the whole document is the offending value, not one of its properties.
+ * Shared between `instancePathToField` (which returns it) and the
+ * `additionalProperties` branch of `toDataErrors` (which compares against
+ * it), so the two stay in sync (issue #35: R2-document-sentinel-coupling). */
+const DOCUMENT_FIELD_SENTINEL = "<document>";
+
 function loadSchema(relativePath: string): object {
   const schemaPath = fileURLToPath(new URL(relativePath, import.meta.url));
   return JSON.parse(readFileSync(schemaPath, "utf8")) as object;
@@ -65,7 +72,7 @@ function instancePathToField(
   if (missingProperty !== undefined) {
     return base.length > 0 ? `${base}.${missingProperty}` : missingProperty;
   }
-  return base.length > 0 ? base : "<document>";
+  return base.length > 0 ? base : DOCUMENT_FIELD_SENTINEL;
 }
 
 function toDataErrors(
@@ -88,7 +95,7 @@ function toDataErrors(
     if (error.keyword === "additionalProperties" && additionalProperty !== undefined) {
       const objectField = instancePathToField(error.instancePath, undefined);
       const field =
-        objectField === "<document>"
+        objectField === DOCUMENT_FIELD_SENTINEL
           ? additionalProperty
           : `${objectField}.${additionalProperty}`;
       return {
@@ -177,7 +184,13 @@ function checkThresholds(doc: unknown, file: string): DataError[] {
   const lastIndex = thresholds.length - 1;
   const last = thresholds[lastIndex];
   if (typeof last !== "object" || last === null) return [];
-  const lastMax = (last as Record<string, unknown>)["max"];
+  const lastRecord = last as Record<string, unknown>;
+  // A missing `max` key already fails the schema's own `required` check
+  // (subscription.schema.json), which names the field; re-deriving a
+  // "got undefined" message on top of that would just be a redundant
+  // second error for the same entry (issue #35, from #36).
+  if (!("max" in lastRecord)) return [];
+  const lastMax = lastRecord["max"];
   if (lastMax !== null) {
     return [
       {

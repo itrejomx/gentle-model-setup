@@ -1,5 +1,13 @@
 import { validateData } from "../load-data.js";
-import { checkRootDir, DEFAULT_DATA_ROOT, EXIT_INVALID, EXIT_OK, EXIT_USAGE, writeDataErrors } from "./io.js";
+import {
+  checkRootDir,
+  DEFAULT_DATA_ROOT,
+  EXIT_INVALID,
+  EXIT_IO_ERROR,
+  EXIT_OK,
+  EXIT_USAGE,
+  writeDataErrors,
+} from "./io.js";
 import type { CliStreams } from "./io.js";
 
 /**
@@ -21,7 +29,7 @@ export async function runValidateCli(args: string[], streams: CliStreams): Promi
   const rootCheck = checkRootDir(rootDir);
   if (!rootCheck.ok) {
     streams.stderr.write(`error: ${rootCheck.message}\n`);
-    return EXIT_USAGE;
+    return EXIT_IO_ERROR;
   }
 
   const errors = await validateData(rootDir);

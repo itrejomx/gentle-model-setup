@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { buildBundle } from "../bundle.js";
-import { DataValidationError } from "../errors.js";
+import { DataValidationError, errorMessage } from "../errors.js";
 import { loadData } from "../load-data.js";
 import { writeFileAtomic } from "./atomic-write.js";
 import type { AtomicWriteOps } from "./atomic-write.js";
@@ -9,9 +9,9 @@ import {
   checkRootDir,
   DEFAULT_DATA_ROOT,
   EXIT_INVALID,
+  EXIT_IO_ERROR,
   EXIT_OK,
   EXIT_USAGE,
-  errorMessage,
   writeDataErrors,
 } from "./io.js";
 import type { CliStreams } from "./io.js";
@@ -46,7 +46,7 @@ export async function runBuildCli(
   const rootCheck = checkRootDir(rootDir);
   if (!rootCheck.ok) {
     streams.stderr.write(`error: ${rootCheck.message}\n`);
-    return EXIT_USAGE;
+    return EXIT_IO_ERROR;
   }
 
   // Nothing is written on a non-zero exit (design.md's CLI contract): both
@@ -73,7 +73,7 @@ export async function runBuildCli(
     writeFileAtomic(outputPath, JSON.stringify(bundle, null, 2) + "\n", ops);
   } catch (cause) {
     streams.stderr.write(`error: cannot write "${outputPath}": ${errorMessage(cause)}\n`);
-    return EXIT_USAGE;
+    return EXIT_IO_ERROR;
   }
 
   streams.stdout.write(`${bundle.hash}\n`);

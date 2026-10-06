@@ -13,6 +13,10 @@ permissions:
 jobs:
   validate-and-test:
     runs-on: ubuntu-latest
+    # A hung step would otherwise hold the runner for the 360-minute
+    # default; the job itself takes about 20 s (issue #35: R4-ci-no-job-
+    # timeout, from #29).
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 

@@ -4,6 +4,14 @@ export interface DataError {
   message: string;
 }
 
+/** Message of a caught value, narrowed instead of cast: a `throw` can carry
+ * anything, not only an `Error`. Shared by `yaml.ts` and `cli/io.ts` so a
+ * thrown non-`Error` value never reads as the literal string "undefined"
+ * (issue #35: R2-yaml-read-error-cast / R3-read-error-cast). */
+export function errorMessage(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
+}
+
 export class DataValidationError extends Error {
   readonly errors: DataError[];
 

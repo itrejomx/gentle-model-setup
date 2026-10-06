@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+import { makeTempRoot, writeValidPhasesFixture } from "./test-helpers.js";
 
 // AGENTS.md bans `child_process` across `packages/data`; the enforcement
 // mechanism (`no-child-process.test.ts`) scans only `src`, so this file --
@@ -54,6 +55,11 @@ describe("CLI entry through a symlinked path (issue #33)", () => {
       timeout: 15_000,
     });
 
+    // Checked before the status assertion (issue #35, from the follow-up
+    // comment): without it, a missing `tsx` shim or the 15 s timeout makes
+    // `result.status` come back `null`, which reads as "expected null to be
+    // 2" -- indistinguishable from an actual regression.
+    expect(result.error).toBeUndefined();
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("cannot read data root");
   });
@@ -67,7 +73,82 @@ describe("CLI entry through a symlinked path (issue #33)", () => {
       timeout: 15_000,
     });
 
+    expect(result.error).toBeUndefined();
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("cannot read data root");
+  });
+});
+
+// Issue #35 (from the follow-up comment): both spawn tests above assert the
+// same usage-failure path, so wiring the wrong core into an entry file (for
+// example `bin/validate.ts` calling `runBuildCli`) would not fail either of
+// them. One success-path case per entry, each asserting the one thing only
+// that entry's own core prints, closes that gap.
+describe("CLI entry success path distinguishes the two cores (issue #35)", () => {
+  it("validate prints nothing to stdout for a valid data root", () => {
+    const entry = symlinkedEntryPath("src/bin/validate.ts");
+    const dataRoot = makeTempRoot(cleanupDirs, "gentle-ai-cli-entry-data-");
+    writeValidPhasesFixture(dataRoot);
+
+    const result = spawnSync(tsxBin, [entry, dataRoot], {
+      cwd: packageDir,
+      encoding: "utf8",
+      timeout: 15_000,
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe("");
+  });
+
+  it("build prints a 64-hex bundle hash to stdout for a valid data root", () => {
+    const entry = symlinkedEntryPath("src/bin/build.ts");
+    const dataRoot = makeTempRoot(cleanupDirs, "gentle-ai-cli-entry-data-");
+    writeValidPhasesFixture(dataRoot);
+    const outputPath = join(dataRoot, "out.json");
+
+    const result = spawnSync(tsxBin, [entry, dataRoot, outputPath], {
+      cwd: packageDir,
+      encoding: "utf8",
+      timeout: 15_000,
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(result.stdout).toMatch(/^[0-9a-f]{64}\n$/);
+  });
+});
+
+// Issue #35 (from the follow-up comment): the deleted `cli/validate.ts` and
+// `cli/build.ts` module paths defined `runValidateCli`/`runBuildCli` but
+// called neither -- running either path directly with `tsx` loaded the
+// module, ran nothing, and exited 0, the same silent-success shape #33
+// removed from the entry files themselves. Renaming the command modules
+// (T5) makes the old paths fail loudly: there is no module there to load.
+describe("old CLI module paths no longer exist (issue #35)", () => {
+  it("the old cli/validate.ts path fails to resolve, never exits 0 silently", () => {
+    const oldPath = join(packageDir, "src", "cli", "validate.ts");
+
+    const result = spawnSync(tsxBin, [oldPath, "/definitely/missing"], {
+      cwd: packageDir,
+      encoding: "utf8",
+      timeout: 15_000,
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.status).not.toBe(0);
+  });
+
+  it("the old cli/build.ts path fails to resolve, never exits 0 silently", () => {
+    const oldPath = join(packageDir, "src", "cli", "build.ts");
+
+    const result = spawnSync(tsxBin, [oldPath, "/definitely/missing"], {
+      cwd: packageDir,
+      encoding: "utf8",
+      timeout: 15_000,
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.status).not.toBe(0);
   });
 });
