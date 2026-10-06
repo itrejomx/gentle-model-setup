@@ -190,6 +190,21 @@ describe("canonical phases", () => {
     expect(findPhase(doc, "gentle-ai-worker").role).toBe("implementer");
   });
 
+  // Issue #40 (maintainer decision 2026-10-06): the worker iterates
+  // test-first inside each delegated task, so it consumes requests in a
+  // burst like the orchestrator. It is the loop Phase the sniper invariant
+  // (ADR 0001) protects now that the SDD apply phase is gone.
+  it("gentle-ai-worker is a loop Phase", () => {
+    const doc = loadPhases();
+    expect(findPhase(doc, "gentle-ai-worker").callPattern).toBe("loop");
+  });
+
+  it("gentle-ai-worker and gentle-orchestrator are the only loop Phases", () => {
+    const doc = loadPhases();
+    const loops = doc.phases.filter((phase) => phase.callPattern === "loop").map((phase) => phase.id);
+    expect(loops.sort()).toEqual(["gentle-ai-worker", "gentle-orchestrator"]);
+  });
+
   it("gentle-ai-verify is a verifier", () => {
     const doc = loadPhases();
     expect(findPhase(doc, "gentle-ai-verify").role).toBe("verifier");

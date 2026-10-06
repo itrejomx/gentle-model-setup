@@ -60,7 +60,7 @@ Gentle AI 4.0 roster, which retired SDD (see #40): 13 rows in four groups.
 | Orchestration | `gentle-orchestrator` | neutral, loop |
 | Judgment Day | `jd-judge-a`, `jd-judge-b`, `jd-fix-agent` | judge-a, judge-b, implementer |
 | Review | `review-risk`, `review-readability`, `review-reliability`, `review-resilience`, `review-refuter`, `review-validator` | verifiers |
-| Workers | `gentle-ai-explore`, `gentle-ai-verify`, `gentle-ai-worker` | neutral, verifier, implementer |
+| Workers | `gentle-ai-explore`, `gentle-ai-verify`, `gentle-ai-worker` | neutral, verifier, implementer (loop) |
 
 Only OpenCode has all 13. Pi has 10, OpenCode 13, Claude Code 8, and Codex 7
 (Codex's install predates Gentle AI 4.0 and awaits a `gentle-ai sync`).
