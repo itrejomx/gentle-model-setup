@@ -65,7 +65,10 @@ Slice B (branch `docs/40-phase-set-docs` from slice A), route: delegated, one wr
 - [x] T8 `openspec/specs/canonical-phases/spec.md` and `runtime-mappings/spec.md`: requirements and scenarios for 13 Phases, four groups, the new counts, the Codex pending note.
 - [x] T9 Verify: `rg -n "sdd-|27 canonical|fourteen" CONTEXT.md docs openspec/specs` returns nothing load-bearing; `pnpm test` unchanged.
 
-Parent, after both slices land:
+Slice C (branch `feat/40-worker-loop` from slice B), route: inline (one data field, one spec scenario, one table cell, two test cases).
+- [x] T9b Maintainer decision 2026-10-06: `gentle-ai-worker` is a `loop` Phase. It iterates test-first inside each delegated task and consumes requests in a burst, so it is the loop the sniper invariant (ADR 0001) protects now that `sdd-apply` is gone. Data, `canonical-phases/spec.md` scenarios, design table, and tests updated; the bundle hash changes again.
+
+Parent, after the slices land:
 - [ ] T10 Rewrite issues #3 and #8 against the 13-row Profile and `gentle-ai-worker` as the implementer (maintainer go-ahead per issue).
 
 ## Acceptance criteria
@@ -93,7 +96,8 @@ outside `openspec/changes/archive/`.
 - 2026-10-06: parent gate. Reflog clean; six files, all inside the surface; `data/` and `openspec/changes/` untouched; glossary read back; the only remaining `sdd-` mention outside negative scenarios is itself a negative scenario (`runtime-mappings/spec.md:80`). Re-run by the parent: `pnpm test` 20 files, 508/508; hash `13f9e5a9...` unchanged.
 - 2026-10-06: slice B native review (assessed `medium`: `canonical-phases/spec.md` classed as an executable change) granted by the maintainer, reliability lens, approved and acknowledged (lineage `review-1e2738942ab1f152`, authority burned). Two informational findings. `R3-sdd-key-check-unproved`: refuted by the parent, `runtime-mappings.test.ts:133` builds the list from both `Object.keys` and `Object.values`, so keys are covered. `R3-codex-header-unasserted`: true, the Codex pending-sync header is a MUST in `runtime-mappings/spec.md:57-62` with no test on the raw file; it is a temporary note that disappears once Codex is re-read, so the spec wording is left as is and the gap is accepted.
 - 2026-10-06: slice B pushed; PR #42 opened against `feat/40-phase-set-gentle-ai-4` (`Refs #40`, 7 files, 146 insertions, 65 deletions); CI job `validate-and-test` passed (run 37539464630).
+- 2026-10-06: slice C (T9b) done inline, commit `765d3d2`. Observed RED: `expected 'one-shot' to be 'loop'` and `expected [ 'gentle-orchestrator' ] to deeply equal [ 'gentle-ai-worker', 'gentle-orchestrator' ]`; GREEN after the data change: phases 97/97, `pnpm test` 20 files 510/510, `pnpm validate` exit 0, new bundle hash `6d9e831c6b3644adf7001295012456a371b3a30401b12c373e65dd3b538c51ce`. Reason recorded on the worker row in `phases.yaml`; `canonical-phases/spec.md` gains the "implementer loop" and "only two loop phases" scenarios; the design table marks the worker `(loop)`.
 
 ## Next step
 
-Maintainer merges #41, then #42 (retarget to `main` first). T10: rewrite issues #3 and #8 against the 13-row Profile and `gentle-ai-worker` as the implementer, one issue at a time, with the maintainer's go-ahead on each draft.
+Native review for slice C (`--base-ref docs/40-phase-set-docs --committed-only`), then on the maintainer's go-ahead push and open its PR stacked on #42. Merge order #41, #42, then this one. Then T10 (issues #3 and #8).
