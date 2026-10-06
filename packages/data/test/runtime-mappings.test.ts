@@ -134,6 +134,16 @@ describe("runtime mappings", () => {
     expect(ids.filter((name) => name.startsWith("sdd-"))).toEqual([]);
   });
 
+  // Issue #40 (slice A review, R3): every canonical Phase is mapped by at
+  // least one runtime. The integrity check above only rejects an unknown
+  // agentMap value; it cannot notice a runtime edit that drops the last
+  // mapping of a Phase. Both sides are read from the data files.
+  it("the union of every runtime's agentMap values is exactly the canonical Phase set", () => {
+    const mapped = new Set(RUNTIME_IDS.flatMap((id) => Object.values(loadRuntime(id).agentMap)));
+    const canonical = loadPhaseRecords().map((phase) => phase.id);
+    expect([...mapped].sort()).toEqual([...canonical].sort());
+  });
+
   // `gentle-orchestrator` is a canonical phase that only OpenCode can map:
   // there it is a configured agent with its own model, while Pi, Claude
   // Code, and Codex run the orchestrator as the active session model.
