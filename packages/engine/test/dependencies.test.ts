@@ -22,6 +22,20 @@ function sourceFiles(directory: string): string[] {
   });
 }
 
+/**
+ * Every quoted mention of the specifier must belong to a type-only import.
+ * That rules out value imports, `export ... from`, bare side-effect imports,
+ * dynamic `import()`, and `require`. The type-only pattern is anchored to one
+ * statement: no `;` and no second `import` keyword between `import type` and
+ * `from`, so it holds with or without semicolons.
+ */
+function countImports(source: string): { mentions: number; typeOnly: number } {
+  const mention = /["']@gentle-ai\/profile-data["']/g;
+  const typeOnlyImport =
+    /^\s*import type\b(?:(?!\bimport\b)[^;])*?from\s+["']@gentle-ai\/profile-data["']/gms;
+  return { mentions: source.match(mention)?.length ?? 0, typeOnly: source.match(typeOnlyImport)?.length ?? 0 };
+}
+
 describe("zero runtime dependencies", () => {
   it("declares no runtime dependency", () => {
     const manifest = readManifest();
@@ -35,16 +49,24 @@ describe("zero runtime dependencies", () => {
   });
 
   it("references the data package only through `import type ... from`", () => {
-    // Every quoted mention of the specifier must belong to a type-only import.
-    // That rules out value imports, `export ... from`, bare side-effect
-    // imports, dynamic `import()`, and `require`.
-    const mention = /["']@gentle-ai\/profile-data["']/g;
-    const typeOnlyImport = /^\s*import type\b[^;]*?from\s+["']@gentle-ai\/profile-data["']/gms;
     const files = sourceFiles(join(packageRoot, "src"));
     expect(files.length).toBeGreaterThan(0);
     for (const file of files) {
-      const source = readFileSync(file, "utf8");
-      expect(source.match(mention)?.length ?? 0, file).toBe(source.match(typeOnlyImport)?.length ?? 0);
+      const { mentions, typeOnly } = countImports(readFileSync(file, "utf8"));
+      expect(mentions, file).toBe(typeOnly);
     }
+  });
+
+  it("counts a value import that follows an `import type` line without a semicolon", () => {
+    const source = [
+      'import type { Tier } from "./types.js"',
+      'import { loadBundle } from "@gentle-ai/profile-data"',
+    ].join("\n");
+    expect(countImports(source)).toEqual({ mentions: 1, typeOnly: 0 });
+  });
+
+  it("accepts a multi-line `import type` of the data package", () => {
+    const source = 'import type {\n  BundlePayload,\n  PhaseRecord,\n} from "@gentle-ai/profile-data";\n';
+    expect(countImports(source)).toEqual({ mentions: 1, typeOnly: 1 });
   });
 });
