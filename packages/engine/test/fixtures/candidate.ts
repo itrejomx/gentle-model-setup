@@ -9,7 +9,6 @@ export interface CandidateSpec {
   modelId?: string;
   billingModel?: "capped" | "metered";
   budgetClass?: BudgetClass | null;
-  requestsPer5h?: number | null;
   strengths?: Record<string, number>;
 }
 
@@ -30,11 +29,7 @@ export function makeCandidate(spec: CandidateSpec): Candidate {
   const subscription = spec.subscription ?? "alpha";
   const modelId = spec.modelId ?? "m";
   const budgetClass = spec.budgetClass === undefined ? "workhorse" : spec.budgetClass;
-  const plan = {
-    ...basePlan,
-    budgetClass,
-    requestsPer5h: spec.requestsPer5h === undefined ? 1000 : spec.requestsPer5h,
-  };
+  const plan = { ...basePlan, budgetClass };
   return {
     id: spec.id ?? `${subscription}/${modelId}`,
     subscription,

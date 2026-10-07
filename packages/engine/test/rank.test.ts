@@ -34,11 +34,11 @@ describe("rankCandidates", () => {
   });
 
   it("orders candidates tied on score, fit, and cheap by prefixed id, never by a raw cap", () => {
-    const pool = [
-      makeCandidate({ id: "a/b", requestsPer5h: 4000 }),
-      makeCandidate({ id: "a/a", requestsPer5h: null }),
-      makeCandidate({ id: "a/c", requestsPer5h: 300 }),
-    ];
+    const withCap = (id: string, requestsPer5h: number | null) => {
+      const base = makeCandidate({ id });
+      return { ...base, plan: { ...base.plan, requestsPer5h } };
+    };
+    const pool = [withCap("a/b", 4000), withCap("a/a", null), withCap("a/c", 300)];
     expect(ids(rankCandidates(pool, oneShot, "BALANCED", none).ranked)).toEqual(["a/a", "a/b", "a/c"]);
   });
 
