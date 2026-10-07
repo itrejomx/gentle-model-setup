@@ -37,8 +37,10 @@ the engine leaves typed hooks and implements none of them.
   Phase's weights, where the Tier multiplies the `cheap` weight by HIGH 0, BALANCED 1, LEAN 3 and
   the weights are renormalized to sum 1. Strength keys are camelCase as in the data.
 - Tiebreaks, in order: Budget Class fit for the call pattern (`loop`: volume > workhorse > semi;
-  `one-shot`: sniper > semi > workhorse > volume), then higher `cheap` Strength, then higher base
-  `requestsPer5h`, then model id. "Cheaper" never means money (ADR 0001). The duplicate-Subscription
+  `one-shot`: sniper > semi > workhorse > volume), then higher `cheap` Strength, then prefixed
+  model id. "Cheaper" never means money, and the engine never reads a raw cap: ADR 0001 says it
+  sees only Budget Class, so a `requestsPer5h` tiebreak proposed on 2026-10-07 was dropped the
+  same day when the pre-commit review flagged it. The duplicate-Subscription
   rule from the design (higher Budget Class for the pattern, capped over metered, the Subscription
   holding more rows) is implemented and tested on a hand-written two-Subscription catalog; it is
   moot for Go-only.
@@ -88,13 +90,13 @@ Slice 1 (branch `feat/3-engine-pool`), route: delegated, one writer.
 - [x] T5 Verify: `pnpm -r typecheck`; `pnpm test` (data package unchanged at 510); the no-runtime-dependency test; `pnpm build` still prints the data hash `6d9e831c6b3644adf7001295012456a371b3a30401b12c373e65dd3b538c51ce`.
 
 Slice 2 (branch `feat/3-engine-resolve` from slice 1), route: delegated, one writer.
-- [ ] T5b (slice 1 review) Selection validation in `buildPool`: a Subscription id not in the payload, or a Plan the Subscription does not declare, raises a typed engine error naming the id; the same Subscription listed twice (any Plans) is rejected the same way, so a prefixed candidate id is unique in the pool. RED-first on the fixture catalog.
-- [ ] T5c (slice 1 review) `filterByCallPattern` copies kept candidates too (or the doc comment stops claiming it); a test appends a reason to a kept candidate and checks the pool candidate is untouched.
-- [ ] T5d (slice 1 review) `dependencies.test.ts` also fails on a bare side-effect import or a dynamic `import()` of the data package; proven by a reverted mutation.
-- [ ] T6 Scoring (`src/score.ts`): the formula above; RED-first: LEAN prefers the cheaper of two equal-quality models; HIGH ignores `cheap`; BALANCED uses the authored weights; the renormalization keeps weights summing to 1.
-- [ ] T7 Tiebreaks and the duplicate-Subscription rule; effort rules (`src/effort.ts`): HIGH gives `high` to a workhorse that lists the variant and `default` to a sniper.
-- [ ] T8 Fallback Chain and rows (`src/resolve.ts`, `resolveProfile`): 2-10 fallbacks, `fallback-chain-short`, the empty row with `pool-empty` and `fill-candidate`; every row carries only typed Reason Factors (a test asserts no string field other than ids and codes). Phase order worker, fix-agent, then data order.
-- [ ] T9 Verify as T5; `resolveProfile` over the hand-written catalog at each Tier matches the scenario expectations.
+- [x] T5b (slice 1 review) Selection validation in `buildPool`: a Subscription id not in the payload, or a Plan the Subscription does not declare, raises a typed engine error naming the id; the same Subscription listed twice (any Plans) is rejected the same way, so a prefixed candidate id is unique in the pool. RED-first on the fixture catalog.
+- [x] T5c (slice 1 review) `filterByCallPattern` copies kept candidates too (or the doc comment stops claiming it); a test appends a reason to a kept candidate and checks the pool candidate is untouched.
+- [x] T5d (slice 1 review) `dependencies.test.ts` also fails on a bare side-effect import or a dynamic `import()` of the data package; proven by a reverted mutation.
+- [x] T6 Scoring (`src/score.ts`): the formula above; RED-first: LEAN prefers the cheaper of two equal-quality models; HIGH ignores `cheap`; BALANCED uses the authored weights; the renormalization keeps weights summing to 1.
+- [x] T7 Tiebreaks and the duplicate-Subscription rule; effort rules (`src/effort.ts`): HIGH gives `high` to a workhorse that lists the variant and `default` to a sniper.
+- [x] T8 Fallback Chain and rows (`src/resolve.ts`, `resolveProfile`): 2-10 fallbacks, `fallback-chain-short`, the empty row with `pool-empty` and `fill-candidate`; every row carries only typed Reason Factors (a test asserts no string field other than ids and codes). Phase order worker, fix-agent, then data order.
+- [x] T9 Verify as T5; `resolveProfile` over the hand-written catalog at each Tier matches the scenario expectations.
 
 Slice 3 (branch `feat/3-engine-demo` from slice 2), route: delegated, one writer.
 - [ ] T10 Property tests (`test/*.property.test.ts`, fast-check over generated catalogs): a sniper never appears in a loop Phase as primary or fallback; with at least three eligible survivors every chain has 2-10 entries; the result does not depend on model input order.
@@ -130,6 +132,22 @@ package has zero runtime dependencies.
 - Plan lookup uses `Object.hasOwn`: a Plan named like an inherited property (`constructor`) must
   offer nothing.
 
+## Rationale for accepted judgment calls (slice 2)
+
+- `Candidate` carries `billingModel` from its Subscription so the duplicate rule can prefer
+  `capped` over `metered`. The duplicate rule applies to the top position only, after the general
+  total-order sort, which keeps the comparator transitive; `duplicate-tiebreak` is emitted only
+  when one of its three rules decides.
+- Row reasons are ordered: the primary's candidate reasons (`budget-fit`, `strength-score`), then
+  the effort reason, then Phase-level reasons (`tier-applied`, then any `duplicate-tiebreak`).
+  `tier-applied` params are `{ tier, multiplier, cheapWeight }`.
+- `fill-candidate` reuses `buildPool` and `filterByCallPattern` per Plan of every Subscription in
+  the payload, so the suggestion respects the selection's constraints.
+- An invalid selection throws `InvalidSelectionError` from `resolveProfile`.
+- A payload without `gentle-ai-worker` or `jd-fix-agent` simply has no such rows; the pre-commit
+  reviewer suggested a warning or moving the lead order into data. Left as specified: the real
+  payload always has both, and the fixture's two Phases exercise the fallback order.
+
 ## Progress
 
 - 2026-10-07: document created on branch `feat/3-engine-pool` from `main` (`060e871`) after a
@@ -139,7 +157,10 @@ package has zero runtime dependencies.
 - 2026-10-07: parent gate. Reflog clean; files inside `packages/engine/**`, `pnpm-lock.yaml`, and this document; no stray emitted file under `packages/data/src` (the writer's one `tsc` emit was cleaned up); `package.json` has no `dependencies`; checks re-run by the parent with the same results. Fixture catalog: Subscriptions `alpha` (Plans `basic`, `pro`) and `beta` (`standard`); six models covering sniper, workhorse with a `high` variant, legacy, trains-on-data volume, pro-only null cap and null retention, and a duplicate id on `beta`; Phases `loop-phase` and `one-shot-phase`.
 - 2026-10-07: slice 1 native review (assessed `medium`: configuration change in `packages/engine/package.json`) granted by the maintainer, reliability lens, approved and acknowledged (lineage `review-87efe405e9562879`, authority burned). Three informational findings, all accepted as true and folded into slice 2 as T5b-T5d: `R3-pool-duplicate-selection-ids` (WARNING: a Subscription listed twice yields candidates sharing one prefixed id; an unknown Subscription or undeclared Plan gives an empty pool silently); `R3-budget-kept-aliasing` (kept candidates are pushed by reference while the doc says copied); `R3-import-type-scan-gaps` (the scan misses side-effect and dynamic imports).
 - 2026-10-07: slice 1 pushed; PR #45 opened against `main` (`Refs #3`; 13 files, 861 insertions excluding the lockfile); CI job `validate-and-test` passed (run 37684713736). Slice 2 branch `feat/3-engine-resolve` created from slice 1.
+- 2026-10-07: slice 2 writer stopped at the T6-T7 commit: the GGA pre-commit review rejected a `requestsPer5h` tiebreak in `rank.ts` under the `AGENTS.md` rule "no code outside the derivation reasons about prices, money, or raw caps" (ADR 0001). The tiebreak was the parent's default, not a maintainer decision; the parent dropped it (Decisions amended above) and resumed the writer. T5b-T5d are committed (`897d5f4`).
+- 2026-10-07: slice 2 done by the resumed writer, commits `b27519a` (scoring, tiebreaks, effort) and `ea840a9` (`resolveProfile`). Observed RED: `score.js` and `effort.js` missing on first run; each tiebreak (fit, `cheap`, id) failed before its code; duplicate-Subscription tests 4 of 5 failing at once (written together, a vertical-slice deviation the writer reported); `resolveProfile` Phase order wrong, reasons `expected [] to deeply equal [Array(4)]`, chain-short and empty-row cases 2 each, rows-held `expected 'x/work-horse' to be 'y/work-horse'`. Reverted mutations: `LEAN: 1` and `HIGH: 1` broke the Tier tests; the always-eligible effort check broke the sniper test; dropping warnings, raising the chain cap to 11, and dropping rows-held tracking each broke their test; the free-string walk needed an all-pruned selection before a prose mutation in `pool-empty` was caught. Observed GREEN: engine 7 files, 79 tests; `pnpm -r typecheck` clean; data 510 unchanged; data hash `6d9e831c...` unchanged; `pnpm validate` exit 0; no `requestsPer5h`, price, money, or `localeCompare` token in the engine; six data imports, all `import type`. Fixture Profiles: plain catalog, every Tier, `loop-phase` -> `alpha/trainer` default with fallbacks `alpha/work-horse`, `beta/work-horse`; `one-shot-phase` -> `alpha/sniper-one` default. Variant with a stronger workhorse and a cheaper volume model, alpha `pro`, `loop-phase`: HIGH `alpha/work-horse` high; BALANCED `alpha/work-horse` default; LEAN `alpha/trainer` default.
+- 2026-10-07: parent gate. Reflog clean; three commits, only `packages/engine/**`; forbidden-token scan empty; checks re-run with the same results; `resolveProfile(payload, selection)` exported from `index.ts`.
 
 ## Next step
 
-Slice 2 on `feat/3-engine-resolve`: T5b-T5d, then T6-T9, one delegated writer. Its PR stacks on #45.
+Native review for slice 2 (`--base-ref feat/3-engine-pool --committed-only`), then on the maintainer's go-ahead push and open its PR stacked on #45. Then slice 3 on `feat/3-engine-demo`.
