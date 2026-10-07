@@ -69,7 +69,7 @@ Slice C (branch `feat/40-worker-loop` from slice B), route: inline (one data fie
 - [x] T9b Maintainer decision 2026-10-06: `gentle-ai-worker` is a `loop` Phase. It iterates test-first inside each delegated task and consumes requests in a burst, so it is the loop the sniper invariant (ADR 0001) protects now that `sdd-apply` is gone. Data, `canonical-phases/spec.md` scenarios, design table, and tests updated; the bundle hash changes again.
 
 Parent, after the slices land:
-- [ ] T10 Rewrite issues #3 and #8 against the 13-row Profile and `gentle-ai-worker` as the implementer (maintainer go-ahead per issue).
+- [x] T10 Rewrite issues #3 and #8 against the 13-row Profile and `gentle-ai-worker` as the implementer (maintainer go-ahead per issue).
 
 ## Acceptance criteria
 
@@ -99,7 +99,9 @@ outside `openspec/changes/archive/`.
 - 2026-10-06: slice C (T9b) done inline, commit `765d3d2`. Observed RED: `expected 'one-shot' to be 'loop'` and `expected [ 'gentle-orchestrator' ] to deeply equal [ 'gentle-ai-worker', 'gentle-orchestrator' ]`; GREEN after the data change: phases 97/97, `pnpm test` 20 files 510/510, `pnpm validate` exit 0, new bundle hash `6d9e831c6b3644adf7001295012456a371b3a30401b12c373e65dd3b538c51ce`. Reason recorded on the worker row in `phases.yaml`; `canonical-phases/spec.md` gains the "implementer loop" and "only two loop phases" scenarios; the design table marks the worker `(loop)`.
 - 2026-10-06: slice C native review (assessed `medium`: configuration change in `phases.yaml`) granted by the maintainer, reliability lens, approved and acknowledged with no findings (lineage `review-e4d3940c5e3eb915`, authority burned).
 - 2026-10-06: slice C pushed; PR #43 opened against `docs/40-phase-set-docs` (`Refs #40`, 5 files, 42 insertions, 6 deletions); CI job `validate-and-test` passed (run 37546656161).
+- 2026-10-06: #41, #42, #43 merged into `main` in order (head `deb4502`), each retargeted to `main` and its diff checked unchanged. Verified on `main`: 510 tests, `pnpm validate` exit 0, 13 Phases, bundle hash `6d9e831c6b3644adf7001295012456a371b3a30401b12c373e65dd3b538c51ce`.
+- 2026-10-07: T10 done. Issue #3: Profile of 13 rows; implementers first (`gentle-ai-worker`, then `jd-fix-agent`); a sniper never enters `gentle-orchestrator` or `gentle-ai-worker`; 13-row demo. Issue #8: the Independence ladder is climbed against the `gentle-ai-worker` primary and its first fallback; the verifiers are `gentle-ai-verify` and the six review lenses, `jd-fix-agent` does not climb. Both bodies read back equal to the drafts the maintainer approved. A first attempt failed because the active `gh` account had switched to one with read permission; the maintainer switched it back.
 
 ## Next step
 
-Maintainer merges #41, then #42 and #43 (retarget each to `main` after its parent merges). T10: rewrite issues #3 and #8 against the 13-row Profile, `gentle-ai-worker` as the loop implementer, and `gentle-ai-verify` plus the judges on the Independence ladder; one issue at a time, with the maintainer's go-ahead on each draft.
+None once this document lands: issue #40 closes with its PR. Next work: issue #3 (engine core) on the 13-Phase contract. Pending facts: Codex roster after a `gentle-ai sync` for Codex; `mistral` prefix with the Mistral Subscription (#6).
