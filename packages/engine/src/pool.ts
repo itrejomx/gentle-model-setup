@@ -62,6 +62,7 @@ export function buildPool(payload: BundlePayload, selection: Selection): Pool {
       const candidate: Candidate = {
         id: `${subscription}/${model.id}`,
         subscription,
+        billingModel: held.billingModel,
         model,
         plan,
         budgetClass: plan.budgetClass,

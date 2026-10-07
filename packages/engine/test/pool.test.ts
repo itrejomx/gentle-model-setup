@@ -24,6 +24,13 @@ describe("buildPool", () => {
   });
 });
 
+describe("buildPool candidates", () => {
+  it("carries the billing model of the Subscription that offers it", () => {
+    const { candidates } = buildPool(catalog, selection());
+    expect(candidates.map((candidate) => candidate.billingModel)).toEqual(["capped", "capped", "capped"]);
+  });
+});
+
 describe("buildPool plans", () => {
   it("offers a model only on the Plans it lists", () => {
     const basic = buildPool(catalog, selection()).candidates.map((candidate) => candidate.id);
