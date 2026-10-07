@@ -81,11 +81,11 @@ engine README. Out: Independence, Overrides, Pins behavior; any change under `da
 ## Tasks
 
 Slice 1 (branch `feat/3-engine-pool`), route: delegated, one writer.
-- [ ] T1 Scaffold `packages/engine`: `package.json` (`@gentle-ai/profile-engine`, `type: module`, scripts `typecheck`, `test`, `build`; devDependencies only: typescript, vitest, fast-check, `@gentle-ai/profile-data` as `workspace:*` for types), `tsconfig.json`, `vitest.config.ts`, `src/index.ts`. `pnpm install` updates the lockfile. A test proves the package has no runtime dependencies.
-- [ ] T2 Types (`src/types.ts`): `Tier`, `Selection`, `Profile`, `ProfileRow`, `Effort`, `ReasonFactor` and `Warning` unions, `Candidate` (internal). Phase ids come from the payload, not a hardcoded list.
-- [ ] T3 Pool (`src/pool.ts`): candidates from the payload for the selection; RED-first scenarios on a hand-written fixture catalog (`test/fixtures/`): a Plan the model does not list excludes it; two Subscriptions offering the same model yield two candidates with distinct prefixed ids; `clientCode` drops trains-on-data models with a `constraint-pruned` reason; `maxLogRetentionDays` drops over-limit and `null` retention (`retention-unknown`).
-- [ ] T4 Budget Class filter (`src/budget.ts`): `sniper` excluded from `loop` Phases with a `budget-filter` reason; `null` class excluded from `loop`, allowed for `one-shot` with `budget-unknown`; fit rank per call pattern as a pure function with a table test.
-- [ ] T5 Verify: `pnpm -r typecheck`; `pnpm test` (data package unchanged at 510); the no-runtime-dependency test; `pnpm build` still prints the data hash `6d9e831c6b3644adf7001295012456a371b3a30401b12c373e65dd3b538c51ce`.
+- [x] T1 Scaffold `packages/engine`: `package.json` (`@gentle-ai/profile-engine`, `type: module`, scripts `typecheck`, `test`, `build`; devDependencies only: typescript, vitest, fast-check, `@gentle-ai/profile-data` as `workspace:*` for types), `tsconfig.json`, `vitest.config.ts`, `src/index.ts`. `pnpm install` updates the lockfile. A test proves the package has no runtime dependencies.
+- [x] T2 Types (`src/types.ts`): `Tier`, `Selection`, `Profile`, `ProfileRow`, `Effort`, `ReasonFactor` and `Warning` unions, `Candidate` (internal). Phase ids come from the payload, not a hardcoded list.
+- [x] T3 Pool (`src/pool.ts`): candidates from the payload for the selection; RED-first scenarios on a hand-written fixture catalog (`test/fixtures/`): a Plan the model does not list excludes it; two Subscriptions offering the same model yield two candidates with distinct prefixed ids; `clientCode` drops trains-on-data models with a `constraint-pruned` reason; `maxLogRetentionDays` drops over-limit and `null` retention (`retention-unknown`).
+- [x] T4 Budget Class filter (`src/budget.ts`): `sniper` excluded from `loop` Phases with a `budget-filter` reason; `null` class excluded from `loop`, allowed for `one-shot` with `budget-unknown`; fit rank per call pattern as a pure function with a table test.
+- [x] T5 Verify: `pnpm -r typecheck`; `pnpm test` (data package unchanged at 510); the no-runtime-dependency test; `pnpm build` still prints the data hash `6d9e831c6b3644adf7001295012456a371b3a30401b12c373e65dd3b538c51ce`.
 
 Slice 2 (branch `feat/3-engine-resolve` from slice 1), route: delegated, one writer.
 - [ ] T6 Scoring (`src/score.ts`): the formula above; RED-first: LEAN prefers the cheaper of two equal-quality models; HIGH ignores `cheap`; BALANCED uses the authored weights; the renormalization keeps weights summing to 1.
@@ -110,12 +110,31 @@ over the retention limit; every row carries Reason Factors as codes with paramet
 natural-language strings; the demo prints a full 13-row Profile for OpenCode Go at each Tier; the
 package has zero runtime dependencies.
 
+## Rationale for accepted judgment calls (slice 1)
+
+- `packages/data` declares `main`/`types` under `dist` but never emits it, so the engine's
+  `tsconfig.json` maps `@gentle-ai/profile-data` to `../data/src/index.ts` through `paths` and sets
+  `noEmit: true`; the engine's `build` script is a typecheck. Whether either package should emit
+  declarations is a packaging decision for the publish slice (#14), not for the engine core.
+- `UnknownCallPatternError` is defined in the engine: importing the data package's error classes
+  would be a runtime import, which the zero-dependency rule forbids.
+- A `null` Budget Class excluded from `loop` carries only the `budget-unknown` warning; a candidate
+  with `null` retention under a limit carries `constraint-pruned` plus `retention-unknown`; a
+  candidate that breaks both constraints carries two `constraint-pruned` reasons.
+- `Profile` is `{ tier, rows }`; `Effort` is `'default' | 'high'`; `override?` and `pin?` are typed
+  as `{ model: string }` and never set in this issue. `filterByCallPattern` returns `{ kept,
+  excluded }` and never mutates its input.
+- Plan lookup uses `Object.hasOwn`: a Plan named like an inherited property (`constructor`) must
+  offer nothing.
+
 ## Progress
 
 - 2026-10-07: document created on branch `feat/3-engine-pool` from `main` (`060e871`) after a
   read-only exploration of the design spec and `packages/data`; the Tier formula was approved by
   the maintainer the same day.
+- 2026-10-07: slice 1 (T1-T5) implemented by one delegated writer, commits `b8a5976` (scaffold, types, dependency test) and `73b58d4` (pool, Budget Class filter). Observed RED: the dependency test failed with ENOENT on `package.json` before the scaffold; `tsc` failed `TS2307: Cannot find module '@gentle-ai/profile-data'` before the `paths` mapping; the pool tests failed `Cannot find module '../src/pool.js'`, then the `constructor` Plan case failed `expected [ ...(4) ] to deeply equal []` until `Object.hasOwn`; the clientCode and four retention cases failed before their rules; the budget tests failed on the missing module. Reverted mutations proved the legacy exclusion, the duplicate-Subscription candidates, the `import type` scan, and the fit-order call. Observed GREEN: engine 3 files, 31 tests; `pnpm -r typecheck` clean; `pnpm test` data 510 unchanged plus engine 31; `pnpm build` data hash `6d9e831c...` unchanged; `pnpm validate` exit 0; no price, Usd, or money token in the engine; the three data imports are `import type`.
+- 2026-10-07: parent gate. Reflog clean; files inside `packages/engine/**`, `pnpm-lock.yaml`, and this document; no stray emitted file under `packages/data/src` (the writer's one `tsc` emit was cleaned up); `package.json` has no `dependencies`; checks re-run by the parent with the same results. Fixture catalog: Subscriptions `alpha` (Plans `basic`, `pro`) and `beta` (`standard`); six models covering sniper, workhorse with a `high` variant, legacy, trains-on-data volume, pro-only null cap and null retention, and a duplicate id on `beta`; Phases `loop-phase` and `one-shot-phase`.
 
 ## Next step
 
-Slice 1, T1-T5, delegated to one writer.
+Native review for slice 1 (`--base-ref origin/main --committed-only`), then on the maintainer's go-ahead push and open its PR against `main` (`Refs #3`). Then slice 2 on `feat/3-engine-resolve`.
