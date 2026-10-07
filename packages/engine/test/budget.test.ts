@@ -91,4 +91,17 @@ describe("filterByCallPattern", () => {
     filterByCallPattern(candidates, "one-shot");
     expect(candidates).toEqual(before);
   });
+
+  it("returns copies of kept candidates, so appending to one leaves the pool untouched", () => {
+    const { kept } = filterByCallPattern(candidates, "one-shot");
+    const copy = kept.find((candidate) => candidate.id === "alpha/work-horse");
+    const original = candidates.find((candidate) => candidate.id === "alpha/work-horse");
+    expect(copy).toBeDefined();
+    expect(original).toBeDefined();
+    expect(copy).not.toBe(original);
+    copy?.reasons.push({ code: "pool-empty", params: { phase: "x" } });
+    copy?.warnings.push({ code: "budget-unknown", params: { candidate: "x" } });
+    expect(original?.reasons).toEqual([]);
+    expect(original?.warnings).toEqual([]);
+  });
 });

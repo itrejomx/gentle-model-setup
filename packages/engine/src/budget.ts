@@ -60,7 +60,11 @@ export function filterByCallPattern(
         ],
       });
     } else {
-      kept.push(candidate);
+      kept.push({
+        ...candidate,
+        reasons: [...candidate.reasons],
+        warnings: [...candidate.warnings],
+      });
     }
   }
   return { kept, excluded };

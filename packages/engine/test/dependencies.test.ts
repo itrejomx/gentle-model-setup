@@ -34,14 +34,17 @@ describe("zero runtime dependencies", () => {
     expect(devDependencies[DATA_PACKAGE]).toBe("workspace:*");
   });
 
-  it("imports the data package only with `import type`", () => {
-    const importPattern = /^\s*(import|export)\b[^;]*?from\s+["']@gentle-ai\/profile-data["']/gms;
+  it("references the data package only through `import type ... from`", () => {
+    // Every quoted mention of the specifier must belong to a type-only import.
+    // That rules out value imports, `export ... from`, bare side-effect
+    // imports, dynamic `import()`, and `require`.
+    const mention = /["']@gentle-ai\/profile-data["']/g;
+    const typeOnlyImport = /^\s*import type\b[^;]*?from\s+["']@gentle-ai\/profile-data["']/gms;
     const files = sourceFiles(join(packageRoot, "src"));
     expect(files.length).toBeGreaterThan(0);
     for (const file of files) {
-      for (const statement of readFileSync(file, "utf8").matchAll(importPattern)) {
-        expect(statement[0].trimStart(), file).toMatch(/^import type\b/);
-      }
+      const source = readFileSync(file, "utf8");
+      expect(source.match(mention)?.length ?? 0, file).toBe(source.match(typeOnlyImport)?.length ?? 0);
     }
   });
 });

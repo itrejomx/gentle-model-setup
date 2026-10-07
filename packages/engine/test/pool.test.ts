@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { InvalidSelectionError } from "../src/errors.js";
 import { buildPool } from "../src/pool.js";
 import type { Selection } from "../src/types.js";
 import { catalog } from "./fixtures/catalog.js";
@@ -30,14 +31,6 @@ describe("buildPool plans", () => {
       .candidates.map((candidate) => candidate.id);
     expect(basic).not.toContain("alpha/pro-only-unknown-cap");
     expect(pro).toContain("alpha/pro-only-unknown-cap");
-  });
-
-  it("never reads an inherited property as a Plan", () => {
-    const { candidates } = buildPool(
-      catalog,
-      selection({ subscriptions: [{ subscription: "alpha", plan: "constructor" }] }),
-    );
-    expect(candidates).toEqual([]);
   });
 
   it("drops legacy models", () => {
@@ -141,5 +134,35 @@ describe("buildPool maxLogRetentionDays", () => {
       { candidate: "alpha/trainer", constraint: "clientCode" },
       { candidate: "alpha/trainer", constraint: "maxLogRetentionDays" },
     ]);
+  });
+});
+
+describe("buildPool selection validation", () => {
+  it("rejects a Subscription the payload does not hold, naming it", () => {
+    expect(InvalidSelectionError).toBeTypeOf("function");
+    const bad = selection({ subscriptions: [{ subscription: "gamma", plan: "basic" }] });
+    expect(() => buildPool(catalog, bad)).toThrow(InvalidSelectionError);
+    expect(() => buildPool(catalog, bad)).toThrow(/gamma/);
+  });
+
+  it("rejects a Plan the Subscription does not declare, naming the Subscription and the Plan", () => {
+    for (const plan of ["enterprise", "constructor"]) {
+      const bad = selection({ subscriptions: [{ subscription: "alpha", plan }] });
+      expect(() => buildPool(catalog, bad)).toThrow(InvalidSelectionError);
+      expect(() => buildPool(catalog, bad)).toThrow(new RegExp(`alpha.*${plan}`));
+    }
+  });
+
+  it("rejects the same Subscription listed twice, on the same or different Plans", () => {
+    for (const second of ["basic", "pro"]) {
+      const bad = selection({
+        subscriptions: [
+          { subscription: "alpha", plan: "basic" },
+          { subscription: "alpha", plan: second },
+        ],
+      });
+      expect(() => buildPool(catalog, bad)).toThrow(InvalidSelectionError);
+      expect(() => buildPool(catalog, bad)).toThrow(/alpha.*twice/);
+    }
   });
 });
