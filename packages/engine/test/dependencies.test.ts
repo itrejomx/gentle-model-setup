@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const packageRoot = join(import.meta.dirname, "..");
@@ -20,6 +20,13 @@ function sourceFiles(directory: string): string[] {
     const path = join(directory, entry.name);
     return entry.isDirectory() ? sourceFiles(path) : entry.name.endsWith(".ts") ? [path] : [];
   });
+}
+
+/** The only directories under `src/` that may import the data package at runtime: the demo's. */
+const RUNTIME_DIRECTORIES = ["cli", "bin"];
+
+function isRuntimeFile(file: string): boolean {
+  return RUNTIME_DIRECTORIES.some((directory) => file.startsWith(join(packageRoot, "src", directory) + sep));
 }
 
 /**
@@ -49,12 +56,21 @@ describe("zero runtime dependencies", () => {
   });
 
   it("references the data package only through `import type ... from`", () => {
-    const files = sourceFiles(join(packageRoot, "src"));
+    const files = sourceFiles(join(packageRoot, "src")).filter((file) => !isRuntimeFile(file));
     expect(files.length).toBeGreaterThan(0);
     for (const file of files) {
       const { mentions, typeOnly } = countImports(readFileSync(file, "utf8"));
       expect(mentions, file).toBe(typeOnly);
     }
+  });
+
+  it("keeps the engine core type-only: the data package's value imports live only in src/cli and src/bin", () => {
+    const valueImporters = sourceFiles(join(packageRoot, "src")).filter((file) => {
+      const { mentions, typeOnly } = countImports(readFileSync(file, "utf8"));
+      return mentions !== typeOnly;
+    });
+    expect(valueImporters.length).toBeGreaterThan(0);
+    for (const file of valueImporters) expect(isRuntimeFile(file), file).toBe(true);
   });
 
   it("counts a value import that follows an `import type` line without a semicolon", () => {
