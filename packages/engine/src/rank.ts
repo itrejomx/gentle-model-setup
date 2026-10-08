@@ -75,18 +75,18 @@ function preferDuplicate(
   );
   const rows = (entry: RankedCandidate) => rowsHeld.get(entry.candidate.subscription) ?? 0;
   const billing = (entry: RankedCandidate) => (entry.candidate.billingModel === "capped" ? 0 : 1);
-  const ordered = [...group].sort(
-    (a, b) =>
-      compareFit(a.fitRank, b.fitRank) || billing(a) - billing(b) || rows(b) - rows(a),
-  );
-  const winner = ordered[0];
-  const runnerUp = ordered[1];
-  if (winner === undefined || runnerUp === undefined) return [];
+  const byRules = (a: RankedCandidate, b: RankedCandidate) =>
+    compareFit(a.fitRank, b.fitRank) || billing(a) - billing(b) || rows(b) - rows(a);
+  const winner = [...group].sort(byRules)[0];
+  if (winner === undefined) return [];
+  // The duplicate a rule separates the winner from: the first one in the
+  // general order, so the current top when the winner displaces it.
+  const dropped = group.find((entry) => entry !== winner && byRules(winner, entry) !== 0);
+  if (dropped === undefined) return [];
   let rule: DuplicateRule;
-  if (winner.fitRank !== runnerUp.fitRank) rule = "budget-class";
-  else if (billing(winner) !== billing(runnerUp)) rule = "capped-over-metered";
-  else if (rows(winner) !== rows(runnerUp)) rule = "subscription-rows";
-  else return [];
+  if (winner.fitRank !== dropped.fitRank) rule = "budget-class";
+  else if (billing(winner) !== billing(dropped)) rule = "capped-over-metered";
+  else rule = "subscription-rows";
   if (winner !== top) {
     ranked.splice(ranked.indexOf(winner), 1);
     ranked.unshift(winner);
@@ -94,7 +94,7 @@ function preferDuplicate(
   return [
     {
       code: "duplicate-tiebreak",
-      params: { kept: winner.candidate.id, dropped: runnerUp.candidate.id, rule },
+      params: { kept: winner.candidate.id, dropped: dropped.candidate.id, rule },
     },
   ];
 }

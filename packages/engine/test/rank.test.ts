@@ -82,6 +82,15 @@ describe("rankCandidates duplicate Subscriptions", () => {
     ]);
   });
 
+  it("moves the best of three duplicates to the top, not just the better of the first two", () => {
+    const pool = [dup("x", { billingModel: "metered" }), dup("y", { billingModel: "capped" }), dup("z", { billingModel: "capped" })];
+    const { ranked, reasons } = rankCandidates(pool, loop, "BALANCED", none);
+    expect(ids(ranked)).toEqual(["y/shared", "x/shared", "z/shared"]);
+    expect(reasons).toEqual([
+      { code: "duplicate-tiebreak", params: { kept: "y/shared", dropped: "x/shared", rule: "capped-over-metered" } },
+    ]);
+  });
+
   it("weighs billing model before rows held", () => {
     const pool = [dup("x", { billingModel: "metered" }), dup("y", { billingModel: "capped" })];
     const held = new Map([["x", 5], ["y", 0]]);

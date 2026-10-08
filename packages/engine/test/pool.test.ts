@@ -40,6 +40,20 @@ describe("buildPool plans", () => {
     expect(pro).toContain("alpha/pro-only-unknown-cap");
   });
 
+  it("offers nothing on a declared Plan named like an inherited property that no model lists", () => {
+    const [alpha, ...others] = catalog.subscriptions;
+    if (alpha === undefined) throw new Error("fixture catalog changed shape");
+    const payload = {
+      ...catalog,
+      subscriptions: [
+        { ...alpha, plans: [...(alpha.plans ?? []), { id: "constructor", displayName: "constructor" }] },
+        ...others,
+      ],
+    };
+    const { candidates } = buildPool(payload, selection({ subscriptions: [{ subscription: "alpha", plan: "constructor" }] }));
+    expect(candidates).toEqual([]);
+  });
+
   it("drops legacy models", () => {
     const ids = buildPool(catalog, selection()).candidates.map((candidate) => candidate.id);
     expect(ids).not.toContain("alpha/old-timer");
