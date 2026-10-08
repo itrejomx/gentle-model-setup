@@ -1,0 +1,20 @@
+{
+  "name": "@gentle-ai/profile-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@gentle-ai/profile-data": "workspace:*",
+    "@types/node": "^22.0.0",
+    "fast-check": "^4.10.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  }
+}
