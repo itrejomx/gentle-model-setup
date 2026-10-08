@@ -33,13 +33,13 @@ function isRuntimeFile(file: string): boolean {
  * Every quoted mention of the specifier must belong to a type-only import.
  * That rules out value imports, `export ... from`, bare side-effect imports,
  * dynamic `import()`, and `require`. The type-only pattern is anchored to one
- * statement: no `;` and no second `import` keyword between `import type` and
- * `from`, so it holds with or without semicolons.
+ * statement: no `;` and no second `import` or `export` keyword between
+ * `import type` and `from`, so it holds with or without semicolons.
  */
 function countImports(source: string): { mentions: number; typeOnly: number } {
   const mention = /["']@gentle-ai\/profile-data["']/g;
   const typeOnlyImport =
-    /^\s*import type\b(?:(?!\bimport\b)[^;])*?from\s+["']@gentle-ai\/profile-data["']/gms;
+    /^\s*import type\b(?:(?!\b(?:import|export)\b)[^;])*?from\s+["']@gentle-ai\/profile-data["']/gms;
   return { mentions: source.match(mention)?.length ?? 0, typeOnly: source.match(typeOnlyImport)?.length ?? 0 };
 }
 
@@ -77,6 +77,14 @@ describe("zero runtime dependencies", () => {
     const source = [
       'import type { Tier } from "./types.js"',
       'import { loadBundle } from "@gentle-ai/profile-data"',
+    ].join("\n");
+    expect(countImports(source)).toEqual({ mentions: 1, typeOnly: 0 });
+  });
+
+  it("counts an `export ... from` that follows an `import type` line without a semicolon", () => {
+    const source = [
+      'import type { A } from "./x.js"',
+      'export { B } from "@gentle-ai/profile-data"',
     ].join("\n");
     expect(countImports(source)).toEqual({ mentions: 1, typeOnly: 0 });
   });

@@ -86,4 +86,24 @@ describe("runDemoCli", () => {
       expect(io.err()).not.toBe("");
     }
   });
+
+  it("exits 1 with the invalid selection on stderr for a bundle without the opencode-go Subscription", async () => {
+    const data = await loadData(dataRoot);
+    const withoutGo = buildBundle({
+      ...data,
+      subscriptions: data.subscriptions.filter((subscription) => subscription.id !== "opencode-go"),
+      models: data.models.filter((model) => model.subscription !== "opencode-go"),
+      // A Runtime Mapping may not name a provider prefix no Subscription declares.
+      runtimes: data.runtimes.map((runtime) => ({
+        ...runtime,
+        prefixMap: Object.fromEntries(Object.entries(runtime.prefixMap).filter(([prefix]) => prefix !== "opencode-go")),
+      })),
+    });
+    const path = join(directory, "without-go.json");
+    writeFileSync(path, JSON.stringify(withoutGo));
+    const io = capture();
+    expect(await runDemoCli([path], io.streams)).toBe(1);
+    expect(io.out()).toBe("");
+    expect(io.err()).toContain('invalid selection for subscription "opencode-go"');
+  });
 });
