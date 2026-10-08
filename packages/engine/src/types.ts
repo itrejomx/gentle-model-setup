@@ -37,7 +37,7 @@ export type ConstraintName = "clientCode" | "maxLogRetentionDays";
  */
 export type ReasonFactor =
   | { code: "strength-score"; params: { candidate: string; score: number } }
-  | { code: "tier-applied"; params: { tier: Tier; cheapWeight: number } }
+  | { code: "tier-applied"; params: { tier: Tier; multiplier: number; cheapWeight: number } }
   | { code: "budget-filter"; params: { candidate: string; budgetClass: BudgetClass; callPattern: string } }
   | {
       code: "budget-fit";
@@ -87,6 +87,8 @@ export interface Candidate {
   /** Prefixed model id, `<subscription>/<model>`. */
   id: string;
   subscription: string;
+  /** How the Subscription bills: a fixed cap, or metered use. */
+  billingModel: "capped" | "metered";
   model: BundleModelRecord;
   plan: BundleModelPlan;
   budgetClass: BudgetClass | null;

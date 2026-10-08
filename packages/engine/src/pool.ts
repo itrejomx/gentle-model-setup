@@ -1,4 +1,5 @@
 import type { BundlePayload } from "@gentle-ai/profile-data";
+import { InvalidSelectionError } from "./errors.js";
 import type { Candidate, Constraints, ConstraintName, Selection } from "./types.js";
 
 export interface Pool {
@@ -32,12 +33,27 @@ function violatedConstraints(candidate: Candidate, constraints: Constraints): Co
 /**
  * The candidates a Selection can draw on: every `current` model offered on
  * the selected Plan of each selected Subscription. A model offered by two
- * selected Subscriptions is two candidates with distinct prefixed ids.
+ * selected Subscriptions is two candidates with distinct prefixed ids. A
+ * Selection naming an unknown Subscription, a Plan it does not declare, or
+ * a Subscription twice raises `InvalidSelectionError`, so a prefixed id is
+ * unique in the pool.
  */
 export function buildPool(payload: BundlePayload, selection: Selection): Pool {
   const candidates: Candidate[] = [];
   const pruned: Candidate[] = [];
+  const seen = new Set<string>();
   for (const { subscription, plan: planId } of selection.subscriptions) {
+    if (seen.has(subscription)) {
+      throw new InvalidSelectionError(subscription, "it is listed twice");
+    }
+    seen.add(subscription);
+    const held = payload.subscriptions.find((record) => record.id === subscription);
+    if (held === undefined) {
+      throw new InvalidSelectionError(subscription, "the payload holds no such Subscription");
+    }
+    if (!(held.plans ?? []).some((declared) => declared.id === planId)) {
+      throw new InvalidSelectionError(subscription, `it declares no Plan "${planId}"`);
+    }
     for (const model of payload.models) {
       if (model.subscription !== subscription || model.status !== "current") continue;
       if (!Object.hasOwn(model.plans, planId)) continue;
@@ -46,6 +62,7 @@ export function buildPool(payload: BundlePayload, selection: Selection): Pool {
       const candidate: Candidate = {
         id: `${subscription}/${model.id}`,
         subscription,
+        billingModel: held.billingModel,
         model,
         plan,
         budgetClass: plan.budgetClass,

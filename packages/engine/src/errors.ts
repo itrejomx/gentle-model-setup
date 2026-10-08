@@ -11,3 +11,19 @@ export class UnknownCallPatternError extends Error {
     this.callPattern = callPattern;
   }
 }
+
+/**
+ * A Selection names a Subscription the payload does not hold, a Plan the
+ * Subscription does not declare, or the same Subscription twice. Surfaced
+ * rather than resolved to an empty pool, so a typo never looks like "no
+ * model fits".
+ */
+export class InvalidSelectionError extends Error {
+  readonly subscription: string;
+
+  constructor(subscription: string, detail: string) {
+    super(`invalid selection for subscription "${subscription}": ${detail}`);
+    this.name = "InvalidSelectionError";
+    this.subscription = subscription;
+  }
+}
